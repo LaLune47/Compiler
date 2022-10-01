@@ -6,12 +6,12 @@ import java.io.IOException;
     封装读文件的部分
  */
 public class MyReader {
-    private String inputFilePath;
+    private final String inputFilePath;
     private Integer pos;
     private Integer line;
-    private StringBuffer buffer;
+    private final StringBuffer buffer;
     
-    private StringBuffer fileText;
+    private final StringBuffer fileText;
     // todo 保存文件全文的笨办法,需要将文件先预先读到字符串里，增加了很多遍数，后期看需不需要更改
     
     public MyReader(String inputFilePath) {
@@ -36,7 +36,7 @@ public class MyReader {
     }
     
     public void addChar() {
-        buffer.append((char) fileText.charAt(pos));
+        buffer.append(fileText.charAt(pos));
     }
     
     public void step() {
@@ -161,7 +161,7 @@ public class MyReader {
         return fileText.charAt(pos) == ')';
     }
     
-    public boolean isLBRACK () {
+    public boolean isLBRACK() {
         return fileText.charAt(pos) == '[';
     }
     
@@ -177,7 +177,7 @@ public class MyReader {
         return fileText.charAt(pos) == '{';
     }
     
-    public boolean isMINU () {
+    public boolean isMINU() {
         return fileText.charAt(pos) == '-';
     }
     

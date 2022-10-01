@@ -8,8 +8,8 @@ import java.util.List;
     词法解读器
 */
 public class LexParser {
-    private MyReader reader;
-    private List<Token> tokenList;
+    private final MyReader reader;
+    private final List<Token> tokenList;
     
     public LexParser(String inputFilePath) {
         this.reader = new MyReader(inputFilePath);
@@ -68,7 +68,7 @@ public class LexParser {
                 reader.addChar();  // 把后双引号也读进来了
                 reader.step();
             } // 矛盾的单双操作符
-            else if(reader.isEqualSign()) {
+            else if (reader.isEqualSign()) {
                 reader.addChar();
                 reader.step();
                 if (reader.isEqualSign()) {

@@ -1,9 +1,9 @@
 package component;
 
 public class Token {
-    private Integer line;
-    private TokenTYPE type;
-    private String value;
+    private final Integer line;
+    private final TokenTYPE type;
+    private final String value;
     
     public Token(Integer line,TokenTYPE type,String value) {
         this.line = line;
