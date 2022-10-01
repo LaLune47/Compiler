@@ -38,6 +38,6 @@ public enum TokenTYPE {
     NEQ,     // !=
     RBRACE,  // }
     ELSETK,  // else
-    VOIDTK   // void
-
+    VOIDTK,   // void
+    DEFAULT
 }
