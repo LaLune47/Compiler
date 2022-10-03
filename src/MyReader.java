@@ -33,10 +33,10 @@ public class MyReader {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("finish construct");
-        System.out.println("pos:"+pos+" line:"+line+" buffer:"+buffer);
-        System.out.println(fileText);
-        System.out.println(fileText.length());
+        //System.out.println("finish construct");
+        //System.out.println("pos:"+pos+" line:"+line+" buffer:"+buffer);
+        //System.out.println(fileText);
+        //System.out.println(fileText.length());
     }
     
     public void addChar() {

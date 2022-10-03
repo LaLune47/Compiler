@@ -143,7 +143,9 @@ public class LexParser {
                     reader.step();
                     continue;
                 } else {
+                    reader.rollback();
                     reader.addChar();
+                    reader.step();
                     tokenTYPE = TokenTYPE.DIV;
                 }
             } else if (reader.isMul()) {
