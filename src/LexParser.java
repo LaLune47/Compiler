@@ -57,7 +57,7 @@ public class LexParser {
                     }
                     //reader.rollback();
                 }
-            } else if (reader.isQuotation()) {
+            } else if (reader.isQuotation()) {   // todo 双引号内有双引号的特殊情况
                 tokenTYPE = TokenTYPE.STRCON;
                 reader.addChar();
                 reader.step();
@@ -121,14 +121,15 @@ public class LexParser {
                 reader.step();
                 tokenTYPE = TokenTYPE.AND;
             } else if (reader.isSlash()) {
-                reader.addChar();
+                //reader.addChar();
                 reader.step();
                 if (reader.isSlash()) {
+                    reader.step();
                     while (!reader.isNewlineN()) {
                         reader.step();
                     }
-                    reader.addLine();
                     reader.step();
+                    reader.addLine();
                     continue;
                 } else if (reader.isMul()) {
                     reader.step();  // 位置到了*下一个
@@ -142,6 +143,7 @@ public class LexParser {
                     reader.step();
                     continue;
                 } else {
+                    reader.addChar();
                     tokenTYPE = TokenTYPE.DIV;
                 }
             } else if (reader.isMul()) {
@@ -196,7 +198,9 @@ public class LexParser {
             
             String value = reader.getBuffer();
             Integer line = reader.getLine();
-            tokenList.add(new Token(line,tokenTYPE,value));
+            Token token = new Token(line,tokenTYPE,value);
+            tokenList.add(token);
+            //System.out.println(token.toString());
         }
         return this.tokenList;
     }
