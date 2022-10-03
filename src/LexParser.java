@@ -17,6 +17,7 @@ public class LexParser {
     }
     
     public List<Token> parse() {
+        //todo 两层循环寻找\n效率太低，考虑reader部分给予标记
         while (true) {
             reader.resetBuffer();
             TokenTYPE tokenTYPE = null;
@@ -31,6 +32,13 @@ public class LexParser {
                     reader.addLine();
                 }
                 reader.step();
+                if (reader.isEnd()) {
+                    break;
+                }
+            }
+    
+            if (reader.isEnd()) {
+                break;
             }
     
             if (reader.isAlpha() || reader.isUnderline()) {
@@ -123,21 +131,27 @@ public class LexParser {
             } else if (reader.isSlash()) {
                 //reader.addChar();
                 reader.step();
-                if (reader.isSlash()) {
+                if (!reader.isEnd() && reader.isSlash()) {
                     reader.step();
-                    while (!reader.isNewlineN()) {
+                    while (!reader.isEnd() && !reader.isNewlineN()) {
                         reader.step();
+                    }
+                    if (reader.isEnd()) {
+                        break;
                     }
                     reader.step();
                     reader.addLine();
                     continue;
-                } else if (reader.isMul()) {
+                } else if (!reader.isEnd() && reader.isMul()) {
                     reader.step();  // 位置到了*下一个
                     while (!reader.isMulSlash()) {
                         reader.step();
                         if (reader.isNewlineN()) {
                             reader.addLine();
                         }
+                        //if (reader.isEnd()) {  //todo /**/多行注释，可能出现的错误1、后面不匹配 2.中途结束
+                        //    break;
+                        //}
                     } // 现在当前位置是*，下一个是/
                     reader.step();
                     reader.step();
