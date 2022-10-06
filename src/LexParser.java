@@ -6,6 +6,7 @@ import java.util.List;
 
 /*
     词法解读器
+    返回List<Token>，跟后面的环节基本独立
 */
 public class LexParser {
     private final MyReader reader;
