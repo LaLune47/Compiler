@@ -1,3 +1,4 @@
+import AST.Node;
 import component.Token;
 
 import java.io.FileNotFoundException;
@@ -15,6 +16,6 @@ public class Compiler {
 //        }
 //        ps.close();
         SyntaxParser syntaxParser = new SyntaxParser(tokenList);
-        syntaxParser.parseAndBuildAst();
+        Node ast = syntaxParser.parseAndBuildAst();
     }
 }
