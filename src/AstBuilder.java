@@ -152,8 +152,10 @@ public class AstBuilder {
         Node currentNode = new BranchNode(NonTerminator.Block);
     
         addLeafChild(currentNode); // {
-        Node child1 = BlockItem();
-        currentNode.addChild(child1);
+        while (!curEqualTo(TokenTYPE.RBRACE)) {
+            Node child1 = BlockItem();
+            currentNode.addChild(child1);
+        }
         addLeafChild(currentNode); // }
         
         return currentNode;
