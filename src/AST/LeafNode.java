@@ -1,12 +1,10 @@
 package AST;
 
-import component.NonTerminator;
 import component.Token;
 
 import java.util.ArrayList;
 
 public class LeafNode implements Node {
-    private static Integer length = 1;
     private Token token;
     private Node parent;
     

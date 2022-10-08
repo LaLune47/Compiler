@@ -1,19 +1,15 @@
 package AST;
 
 import component.NonTerminator;
-import component.Token;
 
 import java.util.ArrayList;
-import java.util.List;
 
-public class BranchNode implements Node{
-    private Integer length;
+public class BranchNode implements Node {
     private NonTerminator nonTerminator;
     private ArrayList<Node> children;
     private Node parent;
     
     public BranchNode(NonTerminator nonTerminator) {
-        this.length = 0;
         this.nonTerminator = nonTerminator;
         this.children = new ArrayList<>();
         this.parent = null;
@@ -45,7 +41,8 @@ public class BranchNode implements Node{
         }
         if (!nonTerminator.equals(NonTerminator.Decl)
                 && !nonTerminator.equals(NonTerminator.BType)
-                && !nonTerminator.equals(NonTerminator.BlockItem))
-        System.out.println("<"+nonTerminator+">");
+                && !nonTerminator.equals(NonTerminator.BlockItem)) {
+            System.out.println("<" + nonTerminator + ">");
+        }
     }
 }

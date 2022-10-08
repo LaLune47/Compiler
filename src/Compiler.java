@@ -2,7 +2,6 @@ import AST.Node;
 import component.Token;
 
 import java.io.FileNotFoundException;
-import java.io.PrintStream;
 import java.util.List;
 
 public class Compiler {
