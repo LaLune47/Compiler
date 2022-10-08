@@ -1,4 +1,3 @@
-import AST.AstPrinter;
 import AST.Node;
 import component.Token;
 
@@ -12,23 +11,15 @@ import java.util.List;
 public class SyntaxParser {
     private List<Token> tokenList;
     private Node ast;
-    private Integer index = 0;
     
     public SyntaxParser(List<Token> tokenList) {
         this.tokenList = tokenList;
         this.ast = null;
-        this.index = 0;
-    }
-    
-    private void next() {
-        index++;
     }
     
     public Node parseAndBuildAst() {  // 建树同时也完成了
-        AstBuilder astBuilder = new AstBuilder();
-        this.ast = astBuilder.CompUnit(tokenList,index);
-        AstPrinter astPrinter = new AstPrinter(ast);
-        astPrinter.PrintSyntaxParser();
+        AstBuilder astBuilder = new AstBuilder(tokenList);
+        this.ast = astBuilder.CompUnit();
         return ast;
     }
     

@@ -17,5 +17,6 @@ public class Compiler {
 //        ps.close();
         SyntaxParser syntaxParser = new SyntaxParser(tokenList);
         Node ast = syntaxParser.parseAndBuildAst();
+        ast.printNode();
     }
 }
