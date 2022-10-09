@@ -424,7 +424,7 @@ public class AstBuilder {
         return currentNode;
     }
     
-    // 变量初值   Exp | '{' [ InitVal { ',' InitVal } ] '}
+    // 变量初值   Exp | '{' [ InitVal { ',' InitVal } ] '}'
     public Node InitVal() {
         Node currentNode = new BranchNode(NonTerminator.InitVal);
         if (!curEqualTo(TokenTYPE.LBRACE)) {
@@ -441,6 +441,7 @@ public class AstBuilder {
                     currentNode.addChild(child2);
                 }
             }
+            addLeafChild(currentNode);  // }
         }
         return currentNode;
     }
