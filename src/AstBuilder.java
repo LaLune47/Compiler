@@ -510,11 +510,15 @@ public class AstBuilder {
             currentNode.addChild(child);
             addLeafChild(currentNode);  // [Exp] ';' ,有Exp的部分情况（exp不为Lval）
         } else {
+            Integer temp = index;
             Node lVal = LVal();
-            currentNode.addChild(lVal);
-            if (curEqualTo(TokenTYPE.SEMICN)) {
-                addLeafChild(currentNode);  // [Exp] ';' ,有Exp的部分情况（exp为Lval）
+            if (!curEqualTo(TokenTYPE.ASSIGN)) {  // [Exp] ';' ,有Exp的部分情况（exp为Lval）
+                index = temp;
+                Node exp = Exp();
+                currentNode.addChild(exp);
+                addLeafChild(currentNode);  //';'
             } else {
+                currentNode.addChild(lVal);
                 addLeafChild(currentNode);  // =
                 if (curEqualTo(TokenTYPE.GETINTTK)) {
                     addLeafChild(currentNode);  // getint
