@@ -1,7 +1,7 @@
 package component;
 
 public enum ErrorTYPE {
-    WrongSymbol_a,
+    WrongString_a,
     Redefine_b,
     Undefine_c,
     FuncParamNum_d,

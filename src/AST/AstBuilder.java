@@ -588,11 +588,18 @@ public class AstBuilder {
         } else if (curEqualTo(TokenTYPE.PRINTFTK)) {
             addLeafChild(currentNode);   // printf
             addLeafChild(currentNode);   // '('
+            Integer paraNum1 = checkParaNum(curToken().getValue());
+            errorString(curToken().getValue().substring(1),currentNode);
             addLeafChild(currentNode);   // FormatString
+            Integer paraNum2 = 0;
             while (curEqualTo(TokenTYPE.COMMA)) {
+                paraNum2++;
                 addLeafChild(currentNode);   // ,
                 Node child = Exp();
                 currentNode.addChild(child);
+            }
+            if (paraNum1 != paraNum2) {
+                errorPrint(currentNode);
             }
             //addLeafChild(currentNode);   // ')'
             if (!curEqualTo(TokenTYPE.RPARENT)) {  // 缺少')'
@@ -771,6 +778,43 @@ public class AstBuilder {
         parentNode.addError(error);
         Token token = new Token(prevTokenLine(),TokenTYPE.RBRACK,"]");
         addErrorLeafChild(parentNode,new LeafNode(token));
+    }
+    
+    private Integer checkParaNum(String str) {
+        Integer num = 0;
+        for(int i = 0;i < str.length(); i++) {
+            if (str.charAt(i) == '%' && i < str.length() - 1 && str.charAt(i + 1) == 'd') {
+                num++;
+            }
+        }
+        return num;
+    }
+    
+    private void errorPrint(Node parentNode) {
+        Error error = new Error(ErrorTYPE.PrintMismatch_l);
+        error.setLine(curLine());
+        parentNode.addError(error);
+    }
+    
+    private void errorString(String str,Node parentNode) {
+        //<FormatChar> → %d
+        //<NormalChar> → 十进制编码为32,33,40-126的ASCII字符，'\'（编码92）出现当且仅当为'\n'
+        // 偷懒，多带了个后面的引号
+        for(int i = 0;i < str.length() - 1; i++) {
+            int c = str.charAt(i);
+            if (c == 32 || c == 33 || c <= 91 && c >= 40 || c <= 126 && c >= 93) {
+                continue;
+            } else if (c == 92 && str.charAt(i + 1) == 'n') {
+                continue;
+            } else if (c == '%' && str.charAt(i + 1) == 'd') {
+                continue;
+            } else {
+                Error error = new Error(ErrorTYPE.WrongString_a);
+                error.setLine(curLine());
+                parentNode.addError(error);
+                return;
+            }
+        }
     }
 }
 
