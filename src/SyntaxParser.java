@@ -23,6 +23,12 @@ public class SyntaxParser {
         return ast;
     }
     
+    public Node CorrectAst(Node node) {
+        AstCorrector astCorrector = new AstCorrector(node);
+        this.ast = astCorrector.correct();
+        return ast;
+    }
+    
     public Node getAst() {
         return ast;
     }

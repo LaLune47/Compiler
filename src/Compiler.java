@@ -17,6 +17,8 @@ public class Compiler {
 //        ps.close();
         SyntaxParser syntaxParser = new SyntaxParser(tokenList);
         Node ast = syntaxParser.parseAndBuildAst();
+        ast = syntaxParser.CorrectAst(ast);  // todo
+        
     
         PrintStream ps = new PrintStream(Config.outputFilePath);
         System.setOut(ps);

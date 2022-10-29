@@ -8,11 +8,13 @@ public class BranchNode implements Node {
     private NonTerminator nonTerminator;
     private ArrayList<Node> children;
     private Node parent;
+    private ArrayList<Error> errors; //TODO 错误排序，写一个compareTo就行
     
     public BranchNode(NonTerminator nonTerminator) {
         this.nonTerminator = nonTerminator;
         this.children = new ArrayList<>();
         this.parent = null;
+        this.errors = new ArrayList<>();
     }
     
     @Override
@@ -44,5 +46,9 @@ public class BranchNode implements Node {
                 && !nonTerminator.equals(NonTerminator.BlockItem)) {
             System.out.println("<" + nonTerminator + ">");
         }
+    }
+    
+    public void addError(Error error) {
+        errors.add(error);
     }
 }

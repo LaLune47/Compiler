@@ -7,6 +7,9 @@ import component.TokenTYPE;
 
 import java.util.List;
 
+// 语法分析 + todo 部分错误处理
+// - i，j，k，括号分号补全，记录错误【ijk】
+//- 处理printf和字符串的报错，记录错误【a,l】
 public class AstBuilder {
     private final List<Token> tokenList;
     private Integer index;
