@@ -8,11 +8,9 @@ import java.util.ArrayList;
 // 遍历器
 public class Visitor {
     private Node ast;
-    private SymbolTable symbolTable;
     
     public Visitor(Node ast) {
         this.ast = ast;
-        this.symbolTable = ((BranchNode) ast).getSymbolTable();
     }
     
     public SymbolTable buildSymbolTable() {
@@ -21,6 +19,7 @@ public class Visitor {
     }
     
     public void errorHandling(ArrayList<MyError> errorList) {
+        // 首先全局来一个 符号表，从ast上得到
         // todo
         
         // errorlist.addError
