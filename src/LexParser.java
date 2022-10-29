@@ -120,7 +120,7 @@ public class LexParser {
             } else if (reader.isVerticalSign()) {
                 reader.addChar();
                 reader.step();
-                reader.addChar();  // todo 错误处理
+                reader.addChar();
                 reader.step();
                 tokenTYPE = TokenTYPE.OR;
             } else if (reader.isAndSign()) {

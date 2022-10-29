@@ -12,7 +12,6 @@ public class MyReader {
     private final StringBuffer buffer;
     
     private final StringBuffer fileText;
-    // todo 保存文件全文的笨办法,需要将文件先预先读到字符串里，增加了很多遍数，后期看需不需要更改
     
     public MyReader(String inputFilePath) {
         this.inputFilePath = inputFilePath;

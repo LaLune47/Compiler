@@ -1,5 +1,6 @@
 package AST;
 
+import SymbolTable.SymbolTable;
 import component.NonTerminator;
 
 import java.util.ArrayList;
@@ -8,13 +9,21 @@ public class BranchNode implements Node {
     private NonTerminator nonTerminator;
     private ArrayList<Node> children;
     private Node parent;
-    private ArrayList<Error> errors; //TODO 错误排序，写一个compareTo就行
+    private SymbolTable symbolTable;
     
     public BranchNode(NonTerminator nonTerminator) {
         this.nonTerminator = nonTerminator;
         this.children = new ArrayList<>();
         this.parent = null;
-        this.errors = new ArrayList<>();
+        this.symbolTable = null;
+    }
+    
+    public void setSymbolTable(SymbolTable symbolTable) {
+        this.symbolTable = symbolTable;
+    }
+    
+    public SymbolTable getSymbolTable() {
+        return symbolTable;
     }
     
     @Override
@@ -46,20 +55,5 @@ public class BranchNode implements Node {
                 && !nonTerminator.equals(NonTerminator.BlockItem)) {
             System.out.println("<" + nonTerminator + ">");
         }
-    }
-    
-    @Override
-    public void printError() {
-        for (Node child:children) {
-            child.printError();
-        }
-        for (Error error:errors) {
-            System.out.println(error.toString());
-        }
-    }
-    
-    @Override
-    public void addError(Error error) {
-        errors.add(error);
     }
 }

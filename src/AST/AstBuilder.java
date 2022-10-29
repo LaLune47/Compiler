@@ -5,17 +5,20 @@ import component.NonTerminator;
 import component.Token;
 import component.TokenTYPE;
 
+import java.util.ArrayList;
 import java.util.List;
 
-// 语法分析 + todo 部分错误处理
+// 语法分析 + 部分错误处理
 // - i，j，k，括号分号补全，记录错误【ijk】
 //- 处理printf和字符串的报错，记录错误【a,l】
 public class AstBuilder {
     private final List<Token> tokenList;
     private Integer index;
+    private ArrayList<MyError> errorList;
     
-    public AstBuilder(List<Token> tokenList) {
+    public AstBuilder(List<Token> tokenList,ArrayList<MyError> errorList) {
         this.tokenList = tokenList;
+        this.errorList = errorList;
         this.index = 0;
     }
     
@@ -589,7 +592,7 @@ public class AstBuilder {
             addLeafChild(currentNode);   // printf
             addLeafChild(currentNode);   // '('
             Integer paraNum1 = checkParaNum(curToken().getValue());
-            errorString(curToken().getValue().substring(1),currentNode);
+            errorString(curToken().getValue().substring(1));
             addLeafChild(currentNode);   // FormatString
             Integer paraNum2 = 0;
             while (curEqualTo(TokenTYPE.COMMA)) {
@@ -599,7 +602,7 @@ public class AstBuilder {
                 currentNode.addChild(child);
             }
             if (paraNum1 != paraNum2) {
-                errorPrint(currentNode);
+                errorPRINTF();
             }
             //addLeafChild(currentNode);   // ')'
             if (!curEqualTo(TokenTYPE.RPARENT)) {  // 缺少')'
@@ -757,25 +760,25 @@ public class AstBuilder {
     }
     
     private void errorSEMICN(Node parentNode) {
-        Error error = new Error(ErrorTYPE.MissSEMICN_i);
+        MyError error = new MyError(ErrorTYPE.MissSEMICN_i);
         error.setLine(prevTokenLine());
-        parentNode.addError(error);
+        addError(error);
         Token token = new Token(prevTokenLine(),TokenTYPE.SEMICN,";");
         addErrorLeafChild(parentNode,new LeafNode(token));
     }
     
     private void errorRPARENT(Node parentNode) {        // )
-        Error error = new Error(ErrorTYPE.MissRPARENT_j);
+        MyError error = new MyError(ErrorTYPE.MissRPARENT_j);
         error.setLine(prevTokenLine());
-        parentNode.addError(error);
+        addError(error);
         Token token = new Token(prevTokenLine(),TokenTYPE.RPARENT,")");
         addErrorLeafChild(parentNode,new LeafNode(token));
     }
     
     private void errorRBRACK(Node parentNode) {         // ]
-        Error error = new Error(ErrorTYPE.MissRBRACK_k);
+        MyError error = new MyError(ErrorTYPE.MissRBRACK_k);
         error.setLine(prevTokenLine());
-        parentNode.addError(error);
+        addError(error);
         Token token = new Token(prevTokenLine(),TokenTYPE.RBRACK,"]");
         addErrorLeafChild(parentNode,new LeafNode(token));
     }
@@ -790,13 +793,13 @@ public class AstBuilder {
         return num;
     }
     
-    private void errorPrint(Node parentNode) {
-        Error error = new Error(ErrorTYPE.PrintMismatch_l);
+    private void errorPRINTF() {
+        MyError error = new MyError(ErrorTYPE.PrintMismatch_l);
         error.setLine(curLine());
-        parentNode.addError(error);
+        addError(error);
     }
     
-    private void errorString(String str,Node parentNode) {
+    private void errorString(String str) {
         //<FormatChar> → %d
         //<NormalChar> → 十进制编码为32,33,40-126的ASCII字符，'\'（编码92）出现当且仅当为'\n'
         // 偷懒，多带了个后面的引号
@@ -809,12 +812,16 @@ public class AstBuilder {
             } else if (c == '%' && str.charAt(i + 1) == 'd') {
                 continue;
             } else {
-                Error error = new Error(ErrorTYPE.WrongString_a);
+                MyError error = new MyError(ErrorTYPE.WrongString_a);
                 error.setLine(curLine());
-                parentNode.addError(error);
+                addError(error);
                 return;
             }
         }
+    }
+    
+    private void addError(MyError error) {
+        errorList.add(error);
     }
 }
 

@@ -1,12 +1,12 @@
 package AST;
 import component.ErrorTYPE;
 
-public class Error {
+public class MyError {
     private Integer line;
     private ErrorTYPE type;
     private String additionalInfo;
     
-    public Error(ErrorTYPE errorTYPE) {
+    public MyError(ErrorTYPE errorTYPE) {
         this.line = 0;
         this.type = errorTYPE;
         this.additionalInfo = null;

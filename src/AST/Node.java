@@ -12,8 +12,4 @@ public interface Node {
     public Node getParent();
     
     public void printNode();
-    
-    public void printError();
-    
-    public void addError(Error error);
 }
