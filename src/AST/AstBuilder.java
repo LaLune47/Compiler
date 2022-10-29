@@ -1,6 +1,5 @@
-import AST.BranchNode;
-import AST.LeafNode;
-import AST.Node;
+package AST;
+
 import component.NonTerminator;
 import component.Token;
 import component.TokenTYPE;
