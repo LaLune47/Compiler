@@ -48,6 +48,17 @@ public class BranchNode implements Node {
         }
     }
     
+    @Override
+    public void printError() {
+        for (Node child:children) {
+            child.printError();
+        }
+        for (Error error:errors) {
+            System.out.println(error.toString());
+        }
+    }
+    
+    @Override
     public void addError(Error error) {
         errors.add(error);
     }

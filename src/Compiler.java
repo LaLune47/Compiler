@@ -17,12 +17,13 @@ public class Compiler {
 //        ps.close();
         SyntaxParser syntaxParser = new SyntaxParser(tokenList);
         Node ast = syntaxParser.parseAndBuildAst();
-        ast = syntaxParser.CorrectAst(ast);  // todo
+        //ast = syntaxParser.CorrectAst(ast);  // todo
         
     
-        PrintStream ps = new PrintStream(Config.outputFilePath);
-        System.setOut(ps);
-        ast.printNode();
-        ps.close();
+//        PrintStream ps = new PrintStream(Config.outputFilePath);
+//        System.setOut(ps);
+        //ast.printNode();
+        ast.printError();
+        //ps.close();
     }
 }

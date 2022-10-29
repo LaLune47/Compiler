@@ -6,9 +6,18 @@ public class Error {
     private ErrorTYPE type;
     private String additionalInfo;
     
-    public Error() {
+    public Error(ErrorTYPE errorTYPE) {
         this.line = 0;
-        this.type = null;
+        this.type = errorTYPE;
         this.additionalInfo = null;
+    }
+    
+    public void setLine(Integer line) {
+        this.line = line;
+    }
+    
+    @Override
+    public String toString() {
+        return "line=" + line + ", type=" + type;
     }
 }

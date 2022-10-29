@@ -1,5 +1,6 @@
 package AST;
 
+import component.ErrorTYPE;
 import component.NonTerminator;
 import component.Token;
 import component.TokenTYPE;
@@ -30,14 +31,34 @@ public class AstBuilder {
         }
     }
     
+    public Token prevToken() {
+        if (tokenList.size() > index - 1 && index - 1 >= 0) {
+            return tokenList.get(index - 1);
+        } else {
+            return null;
+        }
+    }
+    
     public void addLeafChild(Node currentNode) {
         LeafNode leafNode = new LeafNode(curToken());
         currentNode.addChild(leafNode);
         index += 1;
     }
     
+    public void addErrorLeafChild(Node currentNode,LeafNode leafNode) {
+        currentNode.addChild(leafNode);
+    }
+    
     public boolean curEqualTo(TokenTYPE type) {
         return curToken().getType().equals(type);
+    }
+    
+    public Integer curLine() {
+        return curToken().getLine();
+    }
+    
+    public Integer prevTokenLine() {
+        return prevToken().getLine();
     }
     
     public boolean peekEqualTo(Integer step,TokenTYPE type) {
@@ -89,7 +110,14 @@ public class AstBuilder {
             Node child2 = FuncFParams();
             currentNode.addChild(child2);
         }
-        addLeafChild(currentNode);  // ')'
+        
+        //addLeafChild(currentNode);  // ')'
+        if (!curEqualTo(TokenTYPE.RPARENT)) {  // 缺少')'
+            errorRPARENT(currentNode);
+        } else {
+            addLeafChild(currentNode);  // ')'
+        }
+        
         Node child3 = Block();
         currentNode.addChild(child3);
         
@@ -124,12 +152,22 @@ public class AstBuilder {
         addLeafChild(currentNode);  // Ident
         if (curEqualTo(TokenTYPE.LBRACK)) {
             addLeafChild(currentNode);  // [
-            addLeafChild(currentNode);  // ]
+            //addLeafChild(currentNode);  // ]
+            if (!curEqualTo(TokenTYPE.RBRACK)) {  // 缺少']'
+                errorRBRACK(currentNode);
+            } else {
+                addLeafChild(currentNode);  // ']'
+            }
             while (curEqualTo(TokenTYPE.LBRACK)) {
                 addLeafChild(currentNode);  // [
                 Node child2 = ConstExp();
                 currentNode.addChild(child2);
-                addLeafChild(currentNode);  // ]
+                //addLeafChild(currentNode);  // ]
+                if (!curEqualTo(TokenTYPE.RBRACK)) {  // 缺少']'
+                    errorRBRACK(currentNode);
+                } else {
+                    addLeafChild(currentNode);  // ']'
+                }
             }
         }
         return currentNode;
@@ -142,7 +180,12 @@ public class AstBuilder {
         addLeafChild(currentNode); // INT
         addLeafChild(currentNode); // MAIN
         addLeafChild(currentNode); // (
-        addLeafChild(currentNode); // )
+        //addLeafChild(currentNode); // )
+        if (!curEqualTo(TokenTYPE.RPARENT)) {  // 缺少')'
+            errorRPARENT(currentNode);
+        } else {
+            addLeafChild(currentNode);  // ')'
+        }
         
         Node child1 = Block();
         currentNode.addChild(child1);
@@ -194,8 +237,17 @@ public class AstBuilder {
             Node child3 = ConstDef();
             currentNode.addChild(child3);
         }
-    
-        addLeafChild(currentNode);  // ';'
+        
+        if (!curEqualTo(TokenTYPE.SEMICN)) {  // 缺少;
+//            Error error = new Error(ErrorTYPE.MissSEMICN_i);
+//            error.setLine(prevTokenLine());
+//            Token token = new Token(prevTokenLine(),TokenTYPE.SEMICN,";");
+//            addErrorLeafChild(currentNode,new LeafNode(token));
+            errorSEMICN(currentNode);
+        } else {
+            addLeafChild(currentNode);  // ';'
+        }
+
         return currentNode;
     }
     
@@ -216,7 +268,12 @@ public class AstBuilder {
             addLeafChild(currentNode);   // [
             Node child1 = ConstExp();
             currentNode.addChild(child1);
-            addLeafChild(currentNode);   // ]
+            //addLeafChild(currentNode);   // ]
+            if (!curEqualTo(TokenTYPE.RBRACK)) {  // 缺少']'
+                errorRBRACK(currentNode);
+            } else {
+                addLeafChild(currentNode);  // ']'
+            }
         }
         addLeafChild(currentNode);   // '='
     
@@ -309,7 +366,12 @@ public class AstBuilder {
                 Node child = FuncRParams();
                 currentNode.addChild(child);
             }
-            addLeafChild(currentNode);  // )
+            //addLeafChild(currentNode);  // ')'
+            if (!curEqualTo(TokenTYPE.RPARENT)) {  // 缺少')'
+                errorRPARENT(currentNode);
+            } else {
+                addLeafChild(currentNode);  // ')'
+            }
         } else if (isUnaryOp()) {
             Node child1 = UnaryOp();
             currentNode.addChild(child1);
@@ -370,7 +432,12 @@ public class AstBuilder {
             addLeafChild(currentNode);  // [
             Node child = Exp();
             currentNode.addChild(child);
-            addLeafChild(currentNode);  // ]
+            //addLeafChild(currentNode);  // ]
+            if (!curEqualTo(TokenTYPE.RBRACK)) {  // 缺少']'
+                errorRBRACK(currentNode);
+            } else {
+                addLeafChild(currentNode);  // ']'
+            }
         }
         return currentNode;
     }
@@ -402,7 +469,12 @@ public class AstBuilder {
             Node child3 = VarDef();
             currentNode.addChild(child3);
         }
-        addLeafChild(currentNode);  // ;
+        
+        if (!curEqualTo(TokenTYPE.SEMICN)) {  // 缺少;
+            errorSEMICN(currentNode);
+        } else {
+            addLeafChild(currentNode);  // ';'
+        }
         return currentNode;
     }
     
@@ -415,7 +487,12 @@ public class AstBuilder {
             addLeafChild(currentNode);  // [
             Node child1 = ConstExp();
             currentNode.addChild(child1);
-            addLeafChild(currentNode);  // ]
+            //addLeafChild(currentNode);  // ]
+            if (!curEqualTo(TokenTYPE.RBRACK)) {  // 缺少']'
+                errorRBRACK(currentNode);
+            } else {
+                addLeafChild(currentNode);  // ']'
+            }
         }
         
         if (curEqualTo(TokenTYPE.ASSIGN)) {
@@ -464,7 +541,12 @@ public class AstBuilder {
             addLeafChild(currentNode);  // (
             Node child1 = Cond();
             currentNode.addChild(child1);
-            addLeafChild(currentNode);  // )
+            //addLeafChild(currentNode);  // )
+            if (!curEqualTo(TokenTYPE.RPARENT)) {  // 缺少')'
+                errorRPARENT(currentNode);
+            } else {
+                addLeafChild(currentNode);  // ')'
+            }
             Node child2 = Stmt();
             currentNode.addChild(child2);
             if (curEqualTo(TokenTYPE.ELSETK)) {
@@ -477,41 +559,68 @@ public class AstBuilder {
             addLeafChild(currentNode);  // (
             Node child1 = Cond();
             currentNode.addChild(child1);
-            addLeafChild(currentNode);   // )
+            //addLeafChild(currentNode);   // )
+            if (!curEqualTo(TokenTYPE.RPARENT)) {  // 缺少')'
+                errorRPARENT(currentNode);
+            } else {
+                addLeafChild(currentNode);  // ')'
+            }
             Node child2 = Stmt();
             currentNode.addChild(child2);
         } else if (curEqualTo(TokenTYPE.BREAKTK) || curEqualTo(TokenTYPE.CONTINUETK)) {
             addLeafChild(currentNode);  // break | continue
-            addLeafChild(currentNode);  // ;
+            if (!curEqualTo(TokenTYPE.SEMICN)) {  // 缺少;
+                errorSEMICN(currentNode);
+            } else {
+                addLeafChild(currentNode);  // ';'
+            }
         } else if (curEqualTo(TokenTYPE.RETURNTK)) {
             addLeafChild(currentNode);  // return
             if (!curEqualTo(TokenTYPE.SEMICN)) {
                 Node child = Exp();
                 currentNode.addChild(child);
             }
-            addLeafChild(currentNode);  // ;
+            if (!curEqualTo(TokenTYPE.SEMICN)) {  // 缺少;
+                errorSEMICN(currentNode);
+            } else {
+                addLeafChild(currentNode);  // ';'
+            }
         } else if (curEqualTo(TokenTYPE.PRINTFTK)) {
             addLeafChild(currentNode);   // printf
-            addLeafChild(currentNode);   // (
+            addLeafChild(currentNode);   // '('
             addLeafChild(currentNode);   // FormatString
             while (curEqualTo(TokenTYPE.COMMA)) {
                 addLeafChild(currentNode);   // ,
                 Node child = Exp();
                 currentNode.addChild(child);
             }
-            addLeafChild(currentNode);   // )
-            addLeafChild(currentNode);   // ;
+            //addLeafChild(currentNode);   // ')'
+            if (!curEqualTo(TokenTYPE.RPARENT)) {  // 缺少')'
+                errorRPARENT(currentNode);
+            } else {
+                addLeafChild(currentNode);  // ')'
+            }
+            if (!curEqualTo(TokenTYPE.SEMICN)) {  // 缺少;
+                errorSEMICN(currentNode);
+            } else {
+                addLeafChild(currentNode);  // ';'
+            }
         }   /*
              LVal '=' Exp ';'
             | [Exp] ';' //有无Exp两种情况
             | LVal '=' 'getint''('')'';'
             */
         else if (curEqualTo(TokenTYPE.SEMICN)) {
-            addLeafChild(currentNode);  // [Exp] ';' ,没有Exp的情况
+            addLeafChild(currentNode);  // [Exp] ';' ,没有Exp的情况  [特判了，不会有缺分号]
         } else if (stmtCondition()) {
             Node child = Exp();
             currentNode.addChild(child);
-            addLeafChild(currentNode);  // [Exp] ';' ,有Exp的部分情况（exp不为Lval）
+            //addLeafChild(currentNode);  // [Exp] ';' ,有Exp的部分情况（exp不为Lval）
+            if (!curEqualTo(TokenTYPE.SEMICN)) {  // 缺少;
+                errorSEMICN(currentNode);
+            } else {
+                addLeafChild(currentNode);  // ';'
+            }
         } else {
             Integer temp = index;
             Node lVal = LVal();
@@ -519,19 +628,34 @@ public class AstBuilder {
                 index = temp;
                 Node exp = Exp();
                 currentNode.addChild(exp);
-                addLeafChild(currentNode);  //';'
+                //addLeafChild(currentNode);  //';'
+                if (!curEqualTo(TokenTYPE.SEMICN)) {  // 缺少;
+                    errorSEMICN(currentNode);
+                } else {
+                    addLeafChild(currentNode);  // ';'
+                }
             } else {
                 currentNode.addChild(lVal);
                 addLeafChild(currentNode);  // =
                 if (curEqualTo(TokenTYPE.GETINTTK)) {
                     addLeafChild(currentNode);  // getint
                     addLeafChild(currentNode);  // (
-                    addLeafChild(currentNode);  // )
-                    addLeafChild(currentNode);  // ;
+                    //addLeafChild(currentNode);  // )
+                    if (!curEqualTo(TokenTYPE.RPARENT)) {  // 缺少')'
+                        errorRPARENT(currentNode);
+                    } else {
+                        addLeafChild(currentNode);  // ')'
+                    }
+                    //addLeafChild(currentNode);  // ;
                 } else {
                     Node child = Exp();
                     currentNode.addChild(child);
-                    addLeafChild(currentNode);  // ;
+                    //addLeafChild(currentNode);  // ;
+                }
+                if (!curEqualTo(TokenTYPE.SEMICN)) {  // 缺少;
+                    errorSEMICN(currentNode);
+                } else {
+                    addLeafChild(currentNode);  // ';'
                 }
             }
         }
@@ -624,4 +748,33 @@ public class AstBuilder {
         }
         return curRelNode;
     }
+    
+    private void errorSEMICN(Node parentNode) {
+        Error error = new Error(ErrorTYPE.MissSEMICN_i);
+        error.setLine(prevTokenLine());
+        parentNode.addError(error);
+        Token token = new Token(prevTokenLine(),TokenTYPE.SEMICN,";");
+        addErrorLeafChild(parentNode,new LeafNode(token));
+    }
+    
+    private void errorRPARENT(Node parentNode) {        // )
+        Error error = new Error(ErrorTYPE.MissRPARENT_j);
+        error.setLine(prevTokenLine());
+        parentNode.addError(error);
+        Token token = new Token(prevTokenLine(),TokenTYPE.RPARENT,")");
+        addErrorLeafChild(parentNode,new LeafNode(token));
+    }
+    
+    private void errorRBRACK(Node parentNode) {         // ]
+        Error error = new Error(ErrorTYPE.MissRBRACK_k);
+        error.setLine(prevTokenLine());
+        parentNode.addError(error);
+        Token token = new Token(prevTokenLine(),TokenTYPE.RBRACK,"]");
+        addErrorLeafChild(parentNode,new LeafNode(token));
+    }
 }
+
+
+
+
+

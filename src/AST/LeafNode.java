@@ -37,4 +37,14 @@ public class LeafNode implements Node {
     public void printNode() {
         System.out.println(token.toString());
     }
+    
+    @Override
+    public void printError() {
+    }
+    
+    @Override
+    public void addError(Error error) {
+    
+    }
+    
 }
