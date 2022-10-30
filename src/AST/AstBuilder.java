@@ -15,11 +15,13 @@ public class AstBuilder {
     private final List<Token> tokenList;
     private Integer index;
     private ArrayList<MyError> errorList;
+    private Integer cycleDepth;   // 循环深度
     
     public AstBuilder(List<Token> tokenList,ArrayList<MyError> errorList) {
         this.tokenList = tokenList;
         this.errorList = errorList;
         this.index = 0;
+        this.cycleDepth = 0;
     }
     
     public Token peek(Integer step) {
@@ -568,9 +570,14 @@ public class AstBuilder {
             } else {
                 addLeafChild(currentNode);  // ')'
             }
+            cycleDepth += 1;
             Node child2 = Stmt();
             currentNode.addChild(child2);
+            cycleDepth -= 1;
         } else if (curEqualTo(TokenTYPE.BREAKTK) || curEqualTo(TokenTYPE.CONTINUETK)) {
+            if (cycleDepth == 0) {
+                errorLoop();
+            }
             addLeafChild(currentNode);  // break | continue
             if (!curEqualTo(TokenTYPE.SEMICN)) {  // 缺少;
                 errorSEMICN(currentNode);
@@ -818,6 +825,13 @@ public class AstBuilder {
                 return;
             }
         }
+    }
+    
+    private void errorLoop() {
+        MyError error = new MyError(ErrorTYPE.LoopLogout_m);
+        error.setLine(curLine());
+        addError(error);
+        return;
     }
     
     private void addError(MyError error) {
