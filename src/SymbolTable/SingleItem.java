@@ -11,9 +11,9 @@ public class SingleItem {
     private Dimension dimension;
     private ArraySpace arraySpace;
     private String ident;
-    private Node initValue;
-    private ArrayList<Node> initValueArray1;
-    private ArrayList<ArrayList<Node>> initValueArray2;
+    private Node initValue = null;
+    private ArrayList<Node> initValueArray1 = null;
+    private ArrayList<ArrayList<Node>> initValueArray2 = null;
     // 存入初值的和arraySpace的表达式都是addExp
     
     public SingleItem(Variability variability,Dimension dimension,ArraySpace arraySpace,String ident) {
@@ -21,9 +21,6 @@ public class SingleItem {
         this.dimension = dimension;
         this.arraySpace = arraySpace;
         this.ident = ident;
-        this.initValue = null;
-        this.initValueArray1 = null;
-        this.initValueArray2 = null;
     }
     
     public SingleItem(Variability variability) {

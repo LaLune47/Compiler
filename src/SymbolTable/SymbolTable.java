@@ -30,4 +30,15 @@ public class SymbolTable {
     public void addChild(SymbolTable table) {
         children.add(table);
     }
+    
+    public void print() {
+        String self = "SymbolTable{" +
+                    "depth=" + depth +
+                    ", funcs=" + funcs +
+                    ", items=" + items +
+                    '}';
+        for (SymbolTable child:children) {
+            child.print();
+        }
+    }
 }

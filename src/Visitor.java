@@ -7,6 +7,8 @@ import SymbolTable.SingleItem;
 import SymbolTable.Variability;
 import SymbolTable.Dimension;
 import SymbolTable.ArraySpace;
+import SymbolTable.FuncDef;
+import SymbolTable.FuncType;
 import component.NonTerminator;
 import component.TokenTYPE;
 
@@ -115,10 +117,68 @@ public class Visitor {
     
     private void parseFuncDef(Node node,SymbolTable table) {
         // todo 解析函数定义
+        //  FuncDef: FuncType Ident '(' [FuncFParams] ')' Block
+        FuncDef funcDef = new FuncDef();
+        ArrayList<Node> children = node.getChildren();
+        if (children.size() >= 5) {
+            Node type = unwrap(getFirstChild(node));
+            funcDef.setType(tranType(type));
+            LeafNode ident = (LeafNode) children.get(1);
+            funcDef.setIdent(ident.getValue());
+        }
+        
+        if (children.size() == 6) { // 有参数
+            funcDef.addAllParams(parseFuncFParams(children.get(4)));
+        }
+        
+        int length = children.size();
+        Node subBlock = children.get(length - 1);
+        SymbolTable subTable = parseBlock(subBlock,1,table);
+        table.addChild(subTable);
+    }
+    
+    private ArrayList<SingleItem> parseFuncFParams(Node funcFParamsNode) {
+        //FuncFParams,  // 函数形参表   FuncFParam { ',' FuncFParam }
+        ArrayList<Node> children = funcFParamsNode.getChildren();
+        ArrayList<SingleItem> params = new ArrayList<>();
+        
+        int index = 0;
+        while(index < children.size()) {
+            params.add(parseFuncFParam(children.get(index)));
+        }
+        
+        return params;
+    }
+    
+    private SingleItem parseFuncFParam(Node funcFParamNode) {
+        //FuncFParam,  // 函数形参   BType Ident ['[' ']' { '[' ConstExp ']' }]
+        ArrayList<Node> children = funcFParamNode.getChildren();
+        SingleItem item = new SingleItem(Variability.PARA);
+        if (children.size() >= 2) {
+            LeafNode ident = (LeafNode)children.get(1);
+            item.setIdent(ident.getValue());
+        }
+        
+        if (children.size() == 2) {
+            item.setDimension(Dimension.Single);
+            item.setArraySpace(new ArraySpace());
+        } else if (children.size() == 4) {
+            item.setDimension(Dimension.Array1);
+            ArraySpace arraySpace = new ArraySpace();
+            arraySpace.setIgnoreFirst(true);
+            item.setArraySpace(arraySpace);
+        } else {
+            item.setDimension(Dimension.Array2);
+            item.setArraySpace(new ArraySpace(true,unwrap(children.get(5))));
+        }
+        return item;
     }
     
     private boolean typeCheckBranch(Node node, NonTerminator nonTerminator) {
-        return ((BranchNode)node).getNonTerminator().equals(nonTerminator);
+        if (node instanceof BranchNode) {
+            return ((BranchNode)node).getNonTerminator().equals(nonTerminator);
+        }
+        return false;
     }
     
     private boolean typeCheckLeaf(Node node, TokenTYPE type) {
@@ -135,6 +195,15 @@ public class Visitor {
     
     private Node getFirstChild(Node node) {
         return unwrap(node);
+    }
+    
+    private FuncType tranType(Node type) {
+        if (typeCheckLeaf(type,TokenTYPE.INTTK)) {
+            return FuncType.INT;
+        } else if (typeCheckLeaf(type,TokenTYPE.VOIDTK)) {
+            return FuncType.VOID;
+        }
+        return null;
     }
     
     public void errorHandling(ArrayList<MyError> errorList) {

@@ -14,4 +14,22 @@ public class FuncDef {
         this.parameters = parameters;
         this.ident = ident;
     }
+    
+    public FuncDef() {
+        this.type = null;
+        this.parameters = new ArrayList<>();
+        this.ident = null;
+    }
+    
+    public void setType(FuncType type) {
+        this.type = type;
+    }
+    
+    public void setIdent(String ident) {
+        this.ident = ident;
+    }
+    
+    public void addAllParams(ArrayList<SingleItem> parameters) {
+        parameters.addAll(parameters);
+    }
 }

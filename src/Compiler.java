@@ -23,6 +23,7 @@ public class Compiler {
         
         SymbolTable symbolTable = visitor.buildSymbolTable();  // 符号表建立
         ((BranchNode) ast).setSymbolTable(symbolTable);
+        symbolTable.print();
         
         visitor.errorHandling(errorList);          // 错误处理完成
         
