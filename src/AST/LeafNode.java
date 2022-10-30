@@ -1,6 +1,7 @@
 package AST;
 
 import component.Token;
+import component.TokenTYPE;
 
 import java.util.ArrayList;
 
@@ -38,4 +39,11 @@ public class LeafNode implements Node {
         System.out.println(token.toString());
     }
     
+    public TokenTYPE getType() {
+        return token.getType();
+    }
+    
+    public String getValue() {
+        return token.getValue();
+    }
 }

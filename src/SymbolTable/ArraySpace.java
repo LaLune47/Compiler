@@ -1,22 +1,37 @@
 package SymbolTable;
 
+import AST.Node;
+
 public class ArraySpace {
-    private Integer dimension1;
-    private Integer dimension2;
+    private Node space1;
+    private Node space2;
     
     
     public ArraySpace() {
-        this.dimension1 = -1;
-        this.dimension2 = -1;
+        this.space1 = null;
+        this.space2 = null;
     }
     
-    public ArraySpace(Integer dimension1) {
-        this.dimension1 = dimension1;
-        this.dimension2 = -1;
+    public ArraySpace(Node constExpNode) {
+        Node node = constExpNode;
+        if (!constExpNode.getChildren().isEmpty()) {
+            node = constExpNode.getChildren().get(0);  // addExp;
+        }
+        this.space1 = node;
+        this.space2 = null;
     }
     
-    public ArraySpace(Integer dimension1,Integer dimension2) {
-        this.dimension1 = dimension1;
-        this.dimension2 = dimension2;
+    public ArraySpace(Node constExpNode1,Node constExpNode2) {
+        Node node1 = constExpNode1;
+        if (!constExpNode1.getChildren().isEmpty()) {
+            node1 = constExpNode1.getChildren().get(0);  // addExp;
+        }
+    
+        Node node2 = constExpNode2;
+        if (!constExpNode2.getChildren().isEmpty()) {
+            node2 = constExpNode2.getChildren().get(0);  // addExp;
+        }
+        this.space1 = node1;
+        this.space2 = node2;
     }
 }

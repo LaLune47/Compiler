@@ -56,4 +56,8 @@ public class BranchNode implements Node {
             System.out.println("<" + nonTerminator + ">");
         }
     }
+    
+    public NonTerminator getNonTerminator() {
+        return nonTerminator;
+    }
 }

@@ -22,4 +22,12 @@ public class SymbolTable {
         this.children = new ArrayList<>();
         this.items = new HashMap<>();
     }
+    
+    public void addItem(SingleItem item) {
+        items.put(item.getIdent(),item);
+    }
+    
+    public void addChild(SymbolTable table) {
+        children.add(table);
+    }
 }
