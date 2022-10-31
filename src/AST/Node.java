@@ -12,4 +12,12 @@ public interface Node {
     public Node getParent();
     
     public void printNode();
+    
+    public LeafNode getFirstLeafNode();
+    
+    public Integer getLine();
+    
+    public Node unwrap();
+    
+    public Node getFirstChild();
 }

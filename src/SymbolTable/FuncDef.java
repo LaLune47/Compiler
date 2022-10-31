@@ -10,6 +10,7 @@ public class FuncDef {
     private ArrayList<SingleItem> parameters;
     private String ident;
     private SymbolTable symbolTable;
+    private Integer defineLine;
     
     public FuncDef(FuncType type,ArrayList<SingleItem> parameters,String ident) {
         this.type = type;
@@ -41,5 +42,13 @@ public class FuncDef {
     
     public void setSymbolTable(SymbolTable symbolTable) {
         this.symbolTable = symbolTable;
+    }
+    
+    public void setDefineLine(Integer defineLine) {
+        this.defineLine = defineLine;
+    }
+    
+    public Integer getDefineLine() {
+        return defineLine;
     }
 }

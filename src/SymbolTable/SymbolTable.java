@@ -1,5 +1,8 @@
 package SymbolTable;
 
+import AST.MyError;
+import component.ErrorTYPE;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -23,21 +26,33 @@ public class SymbolTable {
         this.items = new HashMap<>();
     }
     
-    public void addItem(SingleItem item) {
-        items.put(item.getIdent(),item);
+    public void addItem(SingleItem item,ArrayList<MyError> errorList) {
+        if (items.containsKey(item.getIdent())) {
+            MyError error = new MyError(ErrorTYPE.Redefine_b);
+            error.setLine(item.getDefineLine());
+            errorList.add(error);
+        } else {
+            items.put(item.getIdent(),item);
+        }
     }
     
-    public void addAllItem(ArrayList<SingleItem> items) {
+    public void addAllItem(ArrayList<SingleItem> items,ArrayList<MyError> errorList) {
         if (items == null) {
             return;
         }
         for(SingleItem item:items) {
-            addItem(item);
+            addItem(item,errorList);
         }
     }
     
-    public void addFunc(FuncDef func) {
-        funcs.put(func.getIdent(),func);
+    public void addFunc(FuncDef func,ArrayList<MyError> errorList) {
+        if (funcs.containsKey(func.getIdent())) {
+            MyError error = new MyError(ErrorTYPE.Redefine_b);
+            error.setLine(func.getDefineLine());
+            errorList.add(error);
+        } else {
+            funcs.put(func.getIdent(),func);
+        }
     }
     
     public void addChild(SymbolTable table) {

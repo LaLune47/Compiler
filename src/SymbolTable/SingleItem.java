@@ -15,6 +15,7 @@ public class SingleItem {
     private ArrayList<Node> initValueArray1 = null;
     private ArrayList<ArrayList<Node>> initValueArray2 = null;
     private boolean isInit;
+    private Integer defineLine;
     // 存入初值的和arraySpace的表达式都是addExp
     
     public SingleItem(Variability variability,Dimension dimension,ArraySpace arraySpace,String ident) {
@@ -37,6 +38,14 @@ public class SingleItem {
         this.dimension = null;
         this.arraySpace =  null;
         this.ident = ident;
+    }
+    
+    public void setDefineLine(Integer defineLine) {
+        this.defineLine = defineLine;
+    }
+    
+    public Integer getDefineLine() {
+        return defineLine;
     }
     
     public void setArraySpace(ArraySpace arraySpace) {
@@ -96,7 +105,7 @@ public class SingleItem {
     
     private boolean typeCheckLeaf(Node node, TokenTYPE type) {
         if (node instanceof LeafNode) {
-            return ((LeafNode)node).getType().equals(type);
+            return ((LeafNode)node).getTokenType().equals(type);
         }
         return false;
     }

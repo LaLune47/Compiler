@@ -22,7 +22,7 @@ public class Visitor {
     }
     
     private boolean typeCheckLeaf(Node node, TokenTYPE type) {
-        return ((LeafNode)node).getType().equals(type);
+        return ((LeafNode)node).getTokenType().equals(type);
     }
     
     private Node childIterator(Node parent, int index) {

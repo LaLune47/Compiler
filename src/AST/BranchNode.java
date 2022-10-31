@@ -60,4 +60,32 @@ public class BranchNode implements Node {
     public NonTerminator getNonTerminator() {
         return nonTerminator;
     }
+    
+    @Override
+    public LeafNode getFirstLeafNode() {
+        Node node = this;
+        while (node instanceof BranchNode) {
+            node = ((BranchNode)node).unwrap();
+        }
+        return (LeafNode) node;
+    }
+    
+    @Override
+    public Integer getLine() {
+        return this.getFirstLeafNode().getLine();
+    }
+    
+    @Override
+    public Node unwrap() { // 去掉一层
+        Node tempNode = this;
+        if (!tempNode.getChildren().isEmpty()) {
+            tempNode = this.getChildren().get(0);
+        }
+        return tempNode;
+    }
+    
+    @Override
+    public Node getFirstChild() {
+        return unwrap();
+    }
 }

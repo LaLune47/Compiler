@@ -18,7 +18,7 @@ public class Compiler {
         SyntaxParser syntaxParser = new SyntaxParser(tokenList,errorList);
         Node ast = syntaxParser.parseAndBuildAst();   // 语法分析+部分错误处理
         
-        SymbolTableBuilder symbolTableBuilder = new SymbolTableBuilder(ast);
+        SymbolTableBuilder symbolTableBuilder = new SymbolTableBuilder(ast,errorList);
         SymbolTable symbolTable = symbolTableBuilder.buildSymbolTable();  // 符号表建立
         ((BranchNode) ast).setSymbolTable(symbolTable);
         symbolTable.print();

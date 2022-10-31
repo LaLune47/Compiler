@@ -39,11 +39,31 @@ public class LeafNode implements Node {
         System.out.println(token.toString());
     }
     
-    public TokenTYPE getType() {
+    @Override
+    public LeafNode getFirstLeafNode() {
+        return null;
+    }
+    
+    @Override
+    public Integer getLine() {
+        return token.getLine();
+    }
+    
+    public TokenTYPE getTokenType() {
         return token.getType();
     }
     
     public String getValue() {
         return token.getValue();
+    }
+    
+    @Override
+    public Node unwrap() {
+        return null;
+    }
+    
+    @Override
+    public Node getFirstChild() {
+        return null;
     }
 }
