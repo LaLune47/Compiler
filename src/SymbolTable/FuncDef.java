@@ -1,4 +1,5 @@
 package SymbolTable;
+import SymbolTable.SymbolTable;
 
 import component.NonTerminator;
 
@@ -8,6 +9,7 @@ public class FuncDef {
     private FuncType type;
     private ArrayList<SingleItem> parameters;
     private String ident;
+    private SymbolTable symbolTable;
     
     public FuncDef(FuncType type,ArrayList<SingleItem> parameters,String ident) {
         this.type = type;
@@ -31,5 +33,13 @@ public class FuncDef {
     
     public void addAllParams(ArrayList<SingleItem> parameters) {
         parameters.addAll(parameters);
+    }
+    
+    public String getIdent() {
+        return ident;
+    }
+    
+    public void setSymbolTable(SymbolTable symbolTable) {
+        this.symbolTable = symbolTable;
     }
 }

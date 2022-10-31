@@ -27,6 +27,19 @@ public class SymbolTable {
         items.put(item.getIdent(),item);
     }
     
+    public void addAllItem(ArrayList<SingleItem> items) {
+        if (items == null) {
+            return;
+        }
+        for(SingleItem item:items) {
+            addItem(item);
+        }
+    }
+    
+    public void addFunc(FuncDef func) {
+        funcs.put(func.getIdent(),func);
+    }
+    
     public void addChild(SymbolTable table) {
         children.add(table);
     }
@@ -37,6 +50,7 @@ public class SymbolTable {
                     ", funcs=" + funcs +
                     ", items=" + items +
                     '}';
+        System.out.println(self);
         for (SymbolTable child:children) {
             child.print();
         }

@@ -14,6 +14,7 @@ public class SingleItem {
     private Node initValue = null;
     private ArrayList<Node> initValueArray1 = null;
     private ArrayList<ArrayList<Node>> initValueArray2 = null;
+    private boolean isInit;
     // 存入初值的和arraySpace的表达式都是addExp
     
     public SingleItem(Variability variability,Dimension dimension,ArraySpace arraySpace,String ident) {
@@ -21,6 +22,7 @@ public class SingleItem {
         this.dimension = dimension;
         this.arraySpace = arraySpace;
         this.ident = ident;
+        this.isInit = false;
     }
     
     public SingleItem(Variability variability) {
@@ -52,8 +54,9 @@ public class SingleItem {
         //ConstInitVal, // 常量初值   ConstExp | '{' [ ConstInitVal { ',' ConstInitVal } ] '}'
         // InitVal,      // 变量初值   Exp | '{' [ InitVal { ',' InitVal } ] '}
         // 最多只有两层所以采用了暴力手段
-    
         // node 为 InitVal 或者 ConstInitVal
+        this.isInit = true;
+        
         ArrayList<Node> children = node.getChildren();
         if (children.size() > 0 && typeCheckLeaf(children.get(0),TokenTYPE.LBRACE)) {
             Node firstInit = children.get(1);
@@ -92,7 +95,10 @@ public class SingleItem {
     }
     
     private boolean typeCheckLeaf(Node node, TokenTYPE type) {
-        return ((LeafNode)node).getType().equals(type);
+        if (node instanceof LeafNode) {
+            return ((LeafNode)node).getType().equals(type);
+        }
+        return false;
     }
     
     private Node unwrap(Node node) { // 去掉一层

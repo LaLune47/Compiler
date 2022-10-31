@@ -46,6 +46,12 @@ public class Visitor {
         return rootTable;
     }
     
+    private SymbolTable parseFuncBlock(Node block,Integer depth,SymbolTable parentTable,ArrayList<SingleItem> parameters) {
+        SymbolTable symbolTable = parseBlock(block,depth,parentTable);
+        symbolTable.addAllItem(parameters);
+        return symbolTable;
+    }
+    
     private SymbolTable parseBlock(Node block,Integer depth,SymbolTable parentTable) {
         // 返回该层级 Block对应的符号表，并且与parent符号表连接
         SymbolTable table = new SymbolTable(depth,parentTable);
@@ -73,14 +79,57 @@ public class Visitor {
     //VarDecl,   // 变量声明   BType VarDef { ',' VarDef } ';'
     private void parseDecl(Node node,SymbolTable table) {
         // node是 Decl
-        if (typeCheckBranch(node,NonTerminator.ConstDecl)) {
+        Node curNode = unwrap(node);
+        if (typeCheckBranch(curNode,NonTerminator.ConstDecl)) {
             int index = 2;
-            ArrayList<Node> children = node.getChildren();
+            ArrayList<Node> children = curNode.getChildren();
             while(index < children.size() && typeCheckBranch(children.get(index),NonTerminator.ConstDef)) {
                 parseConstDef(children.get(index),table);
                 index += 2;
             }
+        } else if (typeCheckBranch(curNode,NonTerminator.VarDecl)) {
+            int index = 1;
+            ArrayList<Node> children = curNode.getChildren();
+            while(index < children.size() && typeCheckBranch(children.get(index),NonTerminator.VarDef)) {
+                parseVarDef(children.get(index),table);
+                index += 2;
+            }
         }
+    }
+    
+    //VarDef,  // 变量定义  Ident { '[' ConstExp ']' } | Ident { '[' ConstExp ']' } '=' InitVal
+    private void parseVarDef(Node node,SymbolTable table) {
+        // node是 VarDef
+        SingleItem item = new SingleItem(Variability.VAR);
+        Integer index = 0;// InitVal位置
+        ArrayList<Node> children = node.getChildren();
+        
+        if (!children.isEmpty()) {
+            item.setIdent(((LeafNode)children.get(0)).getValue());
+        }
+        int length = children.size();
+        if (length - 2 >= 0 && typeCheckLeaf(children.get(length - 2),TokenTYPE.ASSIGN)) {
+            index = length - 1;
+        }
+        
+        if (children.size() == 1 || (children.size() >= 2 && !typeCheckLeaf(children.get(1),TokenTYPE.LBRACK))) {
+            item.setDimension(Dimension.Single);
+            item.setArraySpace(new ArraySpace());
+        } else if (4 <= children.size() && typeCheckLeaf(children.get(1),TokenTYPE.LBRACK)) {
+            if (7 <= children.size() && typeCheckLeaf(children.get(4),TokenTYPE.LBRACK)) {
+                item.setDimension(Dimension.Array2);
+                item.setArraySpace(new ArraySpace(children.get(2),children.get(5)));
+            } else {
+                item.setDimension(Dimension.Array1);
+                item.setArraySpace(new ArraySpace(children.get(2)));
+            }
+        }
+    
+        if (index < children.size() && index != 0) {
+            item.setInitValue(children.get(index));
+        }
+    
+        table.addItem(item);
     }
     
     //ConstDef,  // 常数定义   Ident { '[' ConstExp ']' } '=' ConstInitVal
@@ -116,8 +165,6 @@ public class Visitor {
     }
     
     private void parseFuncDef(Node node,SymbolTable table) {
-        // todo 解析函数定义
-        //  FuncDef: FuncType Ident '(' [FuncFParams] ')' Block
         FuncDef funcDef = new FuncDef();
         ArrayList<Node> children = node.getChildren();
         if (children.size() >= 5) {
@@ -127,14 +174,18 @@ public class Visitor {
             funcDef.setIdent(ident.getValue());
         }
         
+        ArrayList<SingleItem> parameters = null;
         if (children.size() == 6) { // 有参数
-            funcDef.addAllParams(parseFuncFParams(children.get(4)));
+            parameters = parseFuncFParams(children.get(4));
+            funcDef.addAllParams(parameters);
         }
+        table.addFunc(funcDef);
         
         int length = children.size();
         Node subBlock = children.get(length - 1);
-        SymbolTable subTable = parseBlock(subBlock,1,table);
+        SymbolTable subTable = parseFuncBlock(subBlock,1,table,parameters);
         table.addChild(subTable);
+        funcDef.setSymbolTable(subTable);
     }
     
     private ArrayList<SingleItem> parseFuncFParams(Node funcFParamsNode) {
