@@ -25,20 +25,7 @@ public class Visitor {
         return ((LeafNode)node).getTokenType().equals(type);
     }
     
-    private Node childIterator(Node parent, int index) {
-        if (parent instanceof LeafNode) {
-            System.out.println("Leafnode-parent error!");
-            return null;
-        } else {
-            ArrayList<Node> children = ((BranchNode) parent).getChildren();
-            if (children != null && children.size() > index) {
-                return children.get(index);
-            } else {
-                System.out.println(((BranchNode) parent).getNonTerminator().toString() + "--children error");
-                return null;
-            }
-        }
-    }
+
     
     public void errorHandling(ArrayList<MyError> errorList) {
         // 首先全局来一个 符号表，从ast上得到

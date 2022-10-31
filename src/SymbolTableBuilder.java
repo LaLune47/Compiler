@@ -9,6 +9,7 @@ import SymbolTable.Dimension;
 import SymbolTable.ArraySpace;
 import SymbolTable.FuncDef;
 import SymbolTable.FuncType;
+import component.ErrorTYPE;
 import component.NonTerminator;
 import component.TokenTYPE;
 
@@ -42,16 +43,40 @@ public class SymbolTableBuilder {
         Node block = null;
         if (4 < mainFunc.getChildren().size()) {
             block = mainFunc.getChildren().get(4);
-            SymbolTable childTable = parseBlock(block,1,rootTable);
+            SymbolTable childTable = parseFuncBlock(block,1,rootTable,null,FuncType.INT);
+    
             rootTable.addChild(childTable);
         }
         return rootTable;
     }
     
-    private SymbolTable parseFuncBlock(Node block,Integer depth,SymbolTable parentTable,ArrayList<SingleItem> parameters) {
+    private SymbolTable parseFuncBlock(Node block,Integer depth,SymbolTable parentTable,
+                                       ArrayList<SingleItem> parameters,FuncType funcType) {
         SymbolTable symbolTable = parseBlock(block,depth,parentTable);
         symbolTable.addAllItem(parameters,errorList);
+        funcBlockError(block,funcType);
         return symbolTable;
+    }
+    
+    private void funcBlockError(Node block,FuncType funcType) {
+        //Block,     // 语句块  '{' { BlockItem } '}'
+        //BlockItem, // （不输出）语句块项   Decl | Stmt
+        //stmt ----  return
+        if (block.getChildren() != null) {
+            Integer size = block.getChildren().size();
+            Node blockItem = block.childIterator(size - 2);
+            if (funcType.equals(FuncType.INT) &&
+                    !blockItem.getFirstLeafNode().getTokenType().equals(TokenTYPE.RETURNTK)) {
+                MyError error = new MyError(ErrorTYPE.MissReturn_g);
+                error.setLine(block.childIterator(size - 1).getLine());   // 括号行号
+                errorList.add(error);
+            } else if (funcType.equals(FuncType.VOID) &&
+                    blockItem.getFirstLeafNode().getTokenType().equals(TokenTYPE.RETURNTK)) {
+                MyError error = new MyError(ErrorTYPE.SurplusReturn_f);
+                error.setLine(blockItem.getLine());
+                errorList.add(error);
+            }
+        }
     }
     
     private SymbolTable parseBlock(Node block,Integer depth,SymbolTable parentTable) {
@@ -188,7 +213,7 @@ public class SymbolTableBuilder {
         
         int length = children.size();
         Node subBlock = children.get(length - 1);
-        SymbolTable subTable = parseFuncBlock(subBlock,1,table,parameters);
+        SymbolTable subTable = parseFuncBlock(subBlock,1,table,parameters,funcDef.getType());
         table.addChild(subTable);
         funcDef.setSymbolTable(subTable);
     }

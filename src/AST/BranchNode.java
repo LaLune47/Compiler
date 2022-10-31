@@ -88,4 +88,16 @@ public class BranchNode implements Node {
     public Node getFirstChild() {
         return unwrap();
     }
+    
+    @Override
+    public Node childIterator(Integer index) {
+        Node parent = this;
+        ArrayList<Node> children = ((BranchNode) parent).getChildren();
+        if (children != null && children.size() > index) {
+            return children.get(index);
+        } else {
+            System.out.println(((BranchNode) parent).getNonTerminator().toString() + "--children error");
+            return null;
+        }
+    }
 }

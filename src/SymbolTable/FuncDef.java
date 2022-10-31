@@ -51,4 +51,8 @@ public class FuncDef {
     public Integer getDefineLine() {
         return defineLine;
     }
+    
+    public FuncType getType() {
+        return type;
+    }
 }

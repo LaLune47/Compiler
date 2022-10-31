@@ -20,4 +20,6 @@ public interface Node {
     public Node unwrap();
     
     public Node getFirstChild();
+    
+    public Node childIterator(Integer index);
 }

@@ -66,4 +66,13 @@ public class LeafNode implements Node {
     public Node getFirstChild() {
         return null;
     }
+    
+    @Override
+    public Node childIterator(Integer index) {
+        System.out.println("Leafnode-parent error!");
+        return null;
+    }
+
+
+
 }
