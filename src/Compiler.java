@@ -20,7 +20,7 @@ public class Compiler {
         
         SymbolTableBuilder symbolTableBuilder = new SymbolTableBuilder(ast,errorList);
         SymbolTable symbolTable = symbolTableBuilder.buildSymbolTable();  // 符号表建立
-        ((BranchNode) ast).setSymbolTable(symbolTable);
+        symbolTable.setBindingNode(ast);
         symbolTable.print();
         
         Visitor visitor = new Visitor(ast);

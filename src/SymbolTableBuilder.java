@@ -35,6 +35,7 @@ public class SymbolTableBuilder {
                 parseDecl(child,rootTable);
             } else if (typeCheckBranch(child,NonTerminator.FuncDef)) {
                 parseFuncDef(child,rootTable);
+                // todo 全局变量和函数定义的重复问题
             }
         }
         
@@ -54,29 +55,39 @@ public class SymbolTableBuilder {
                                        ArrayList<SingleItem> parameters,FuncType funcType) {
         SymbolTable symbolTable = parseBlock(block,depth,parentTable);
         symbolTable.addAllItem(parameters,errorList);
-        funcBlockError(block,funcType);
+        funcReturnError(block,funcType);
         return symbolTable;
     }
     
-    private void funcBlockError(Node block,FuncType funcType) {
+    // todo return 的处理存在bug，看看定义
+    private void funcReturnError(Node block,FuncType funcType) {
         //Block,     // 语句块  '{' { BlockItem } '}'
         //BlockItem, // （不输出）语句块项   Decl | Stmt
         //stmt ----  return
         if (block.getChildren() != null) {
             Integer size = block.getChildren().size();
             Node blockItem = block.childIterator(size - 2);
-            if (funcType.equals(FuncType.INT) &&
-                    !blockItem.getFirstLeafNode().getTokenType().equals(TokenTYPE.RETURNTK)) {
+            if (funcType.equals(FuncType.INT) && !checkReturn(blockItem)) {
                 MyError error = new MyError(ErrorTYPE.MissReturn_g);
                 error.setLine(block.childIterator(size - 1).getLine());   // 括号行号
                 errorList.add(error);
-            } else if (funcType.equals(FuncType.VOID) &&
-                    blockItem.getFirstLeafNode().getTokenType().equals(TokenTYPE.RETURNTK)) {
+            } else if (funcType.equals(FuncType.VOID) && checkReturn(blockItem)) {
                 MyError error = new MyError(ErrorTYPE.SurplusReturn_f);
                 error.setLine(blockItem.getLine());
                 errorList.add(error);
             }
         }
+    }
+    
+    private boolean checkReturn(Node blockItem) {
+        Node leaf = blockItem.getFirstLeafNode();
+        if (leaf != null) {
+            TokenTYPE tokenTYPE = ((LeafNode)leaf).getTokenType();
+            if (tokenTYPE != null) {
+                return tokenTYPE.equals(tokenTYPE.RETURNTK);
+            }
+        }
+        return false;
     }
     
     private SymbolTable parseBlock(Node block,Integer depth,SymbolTable parentTable) {
@@ -99,8 +110,37 @@ public class SymbolTableBuilder {
                 }
             }
         }
+        table.setBindingNode(block);
+        table.setLine(block.getFirstLeafNode().getLine(),block.getLastLeafNode().getLine());
+        // todo 要不就在这里把错误处理做了得了
+        //lValConstError();
         return table;
     }
+    
+//    private void lValError(Node block,SymbolTable table) {
+//        //Block,     // 语句块  '{' { BlockItem } '}'
+//        //BlockItem, // （不输出）语句块项   Decl | Stmt
+//         /*  Stmt,   LVal左值表达式类，exp或者getint()
+//                     [EXP] ';'
+//                     Block嵌套
+//                     if、while等关键词
+//                    */
+//        for (Node childNode: block.getChildren()) {
+//            if (childNode instanceof LeafNode) {
+//                continue;
+//            } else {
+//                Node declOrStmt = childNode.unwrap();   // BlockItem  Decl | Stmt
+//                if (typeCheckBranch(declOrStmt,NonTerminator.Stmt)) {
+//                    Node node = declOrStmt.getFirstChild();
+//                    if (typeCheckBranch(node,NonTerminator.LVal)) {
+//                        // LVal  左值表达式  → Ident {'[' Exp ']'}
+//                        String ident = node.getFirstLeafNode().getValue();
+//                        // 左值错误   没写完呢还
+//                    }
+//                }
+//            }
+//        }
+//    }
     
     //ConstDecl, // 常量声明   'const' BType ConstDef { ',' ConstDef } ';'
     //VarDecl,   // 变量声明   BType VarDef { ',' VarDef } ';'

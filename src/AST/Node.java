@@ -15,6 +15,8 @@ public interface Node {
     
     public LeafNode getFirstLeafNode();
     
+    public LeafNode getLastLeafNode();
+    
     public Integer getLine();
     
     public Node unwrap();

@@ -1,6 +1,8 @@
 package SymbolTable;
 
+import AST.BranchNode;
 import AST.MyError;
+import AST.Node;
 import component.ErrorTYPE;
 
 import java.util.ArrayList;
@@ -12,6 +14,9 @@ public class SymbolTable {
     private ArrayList<SymbolTable> children;
     private HashMap<String,FuncDef> funcs;
     private HashMap<String,SingleItem> items;
+    private Node bindingNode;   // block，CompUnit
+    private Integer startLine;
+    private Integer endLine;
     
     public SymbolTable(Integer depth,SymbolTable parent) {
         if (depth == 0) {
@@ -26,7 +31,19 @@ public class SymbolTable {
         this.items = new HashMap<>();
     }
     
-    public void addItem(SingleItem item,ArrayList<MyError> errorList) {
+    public void setLine(Integer startLine,Integer endLine) {
+        this.startLine = startLine;
+        this.endLine = endLine;
+    }
+    
+    public void setBindingNode(Node bindingNode) {  // 双向绑定
+        this.bindingNode = bindingNode;
+        if (bindingNode instanceof BranchNode) {
+            ((BranchNode) bindingNode).setSymbolTable(this);
+        }
+    }
+    
+    public void addItem(SingleItem item, ArrayList<MyError> errorList) {
         if (items.containsKey(item.getIdent())) {
             MyError error = new MyError(ErrorTYPE.Redefine_b);
             error.setLine(item.getDefineLine());

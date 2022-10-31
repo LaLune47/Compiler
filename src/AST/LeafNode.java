@@ -45,6 +45,11 @@ public class LeafNode implements Node {
     }
     
     @Override
+    public LeafNode getLastLeafNode() {
+        return null;
+    }
+    
+    @Override
     public Integer getLine() {
         return token.getLine();
     }

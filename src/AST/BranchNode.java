@@ -71,6 +71,18 @@ public class BranchNode implements Node {
     }
     
     @Override
+    public LeafNode getLastLeafNode() {
+        Node node = this;
+        while (node instanceof BranchNode) {
+            if (!node.getChildren().isEmpty()) {
+                int size = node.getChildren().size();
+                node = node.getChildren().get(size - 1);
+            }
+        }
+        return (LeafNode) node;
+    }
+    
+    @Override
     public Integer getLine() {
         return this.getFirstLeafNode().getLine();
     }
