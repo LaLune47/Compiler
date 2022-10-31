@@ -5,7 +5,6 @@ import SymbolTable.SymbolTable;
 import component.Token;
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,19 +18,18 @@ public class Compiler {
         SyntaxParser syntaxParser = new SyntaxParser(tokenList,errorList);
         Node ast = syntaxParser.parseAndBuildAst();   // 语法分析+部分错误处理
         
-        Visitor visitor = new Visitor(ast);
-        
-        SymbolTable symbolTable = visitor.buildSymbolTable();  // 符号表建立
+        SymbolTableBuilder symbolTableBuilder = new SymbolTableBuilder(ast);
+        SymbolTable symbolTable = symbolTableBuilder.buildSymbolTable();  // 符号表建立
         ((BranchNode) ast).setSymbolTable(symbolTable);
         symbolTable.print();
         
-        visitor.errorHandling(errorList);          // 错误处理完成
-        
-        // todo errorList 按照行数排序
+        Visitor visitor = new Visitor(ast);
+        visitor.errorHandling(errorList);            // 错误处理完成
         
         //PrintStream ps = new PrintStream(Config.outputFilePath);
         //System.setOut(ps);
         for (MyError error: errorList) {
+            // todo errorList 按照行数排序输出
             System.out.println(error.toString());
         }
         //ps.close();
