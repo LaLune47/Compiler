@@ -2,6 +2,9 @@ import AST.BranchNode;
 import AST.LeafNode;
 import AST.MyError;
 import AST.Node;
+import MidCode.MidCode;
+import MidCode.MidGenerator;
+import MidCode.Operation;
 import SymbolTable.SymbolTable;
 import SymbolTable.SingleItem;
 import SymbolTable.Variability;
@@ -19,10 +22,19 @@ import java.util.ArrayList;
 public class SymbolTableBuilder {
     private Node ast;
     private ArrayList<MyError> errorList;
+    private MidGenerator generator;
+    private ArrayList<MidCode> midCodes;
+    private static Integer blockNum = 1;
     
     public SymbolTableBuilder(Node ast,ArrayList<MyError> errorList) {
         this.ast = ast;
         this.errorList = errorList;
+        generator = new MidGenerator();
+        midCodes = new ArrayList<>();
+    }
+    
+    public ArrayList<MidCode> getMidCodes() {
+        return midCodes;
     }
     
     public SymbolTable buildSymbolTable() {
@@ -44,8 +56,13 @@ public class SymbolTableBuilder {
         Node block = null;
         if (4 < mainFunc.getChildren().size()) {
             block = mainFunc.getChildren().get(4);
+            Integer curNum = blockNum;
+            midCodes.add(new MidCode(Operation.LABEL,curNum.toString(),"start"));
+            blockNum++;
+            midCodes.add(new MidCode(Operation.MAIN));
             SymbolTable childTable = parseFuncBlock(block,1,rootTable,null,FuncType.INT);
-    
+            midCodes.add(new MidCode(Operation.LABEL,curNum.toString(),"end"));
+            midCodes.add(new MidCode(Operation.EXIT));
             rootTable.addChild(childTable);
         }
         return rootTable;
@@ -104,7 +121,11 @@ public class SymbolTableBuilder {
                 } else {
                     if (typeCheckBranch(declOrStmt.getFirstChild(),NonTerminator.Block)) {
                         Node subBlock = declOrStmt.getFirstChild();
+                        Integer curNum = blockNum;
+                        midCodes.add(new MidCode(Operation.LABEL,curNum.toString(),"start"));
+                        blockNum++;
                         SymbolTable subTable = parseBlock(subBlock,depth + 1,table);
+                        midCodes.add(new MidCode(Operation.LABEL,curNum.toString(),"end"));
                         table.addChild(subTable);
                     }
                 }
@@ -171,6 +192,8 @@ public class SymbolTableBuilder {
         item.setDefineLine(node.getLine());
         Integer index = 0;// InitVal位置
         ArrayList<Node> children = node.getChildren();
+    
+        MidCode midCode = null;
         
         if (!children.isEmpty()) {
             item.setIdent(((LeafNode)children.get(0)).getValue());
@@ -183,6 +206,7 @@ public class SymbolTableBuilder {
         if (children.size() == 1 || (children.size() >= 2 && !typeCheckLeaf(children.get(1),TokenTYPE.LBRACK))) {
             item.setDimension(Dimension.Single);
             item.setArraySpace(new ArraySpace());
+            midCode = new MidCode(Operation.VAR,item.getIdent());
         } else if (4 <= children.size() && typeCheckLeaf(children.get(1),TokenTYPE.LBRACK)) {
             if (7 <= children.size() && typeCheckLeaf(children.get(4),TokenTYPE.LBRACK)) {
                 item.setDimension(Dimension.Array2);
@@ -195,23 +219,29 @@ public class SymbolTableBuilder {
     
         if (index < children.size() && index != 0) {
             item.setInitValue(children.get(index));
+            //midCode.varSetX(children.get(index));   todo 常量、变量、初值，到底怎么解决，好像跟表达式有关
         }
     
         table.addItem(item,errorList);
+        midCodes.add(midCode);
     }
     
     //ConstDef,  // 常数定义   Ident { '[' ConstExp ']' } '=' ConstInitVal
     private void parseConstDef(Node node,SymbolTable table) {
         // node是 ConstDef
+        // todo 数组定义这里，错误处理部分好像写多了，代码生成部分写
         SingleItem item = new SingleItem(Variability.CONST);
         item.setDefineLine(node.getLine());
         Integer index = 0;// ConstInitVal位置
         ArrayList<Node> children = node.getChildren();
         
+        MidCode midCode = null;
+        
         if (2 < children.size() && typeCheckLeaf(children.get(1),TokenTYPE.ASSIGN)) {
             item.setDimension(Dimension.Single);
             item.setArraySpace(new ArraySpace());
             item.setIdent(((LeafNode)children.get(0)).getValue());
+            midCode = new MidCode(Operation.CONST,item.getIdent());
             index = 2;
         } else if (5 < children.size() && typeCheckLeaf(children.get(1),TokenTYPE.LBRACK)) {
             item.setIdent(((LeafNode)children.get(0)).getValue());
@@ -228,25 +258,34 @@ public class SymbolTableBuilder {
         
         if (index < children.size()) {
             item.setInitValue(children.get(index));
+            //midCode.varSetX(children.get(index));   todo 常量、变量、初值，到底怎么解决，好像跟表达式有关
         }
         
         table.addItem(item,errorList);
+        midCodes.add(midCode);
     }
     
     private void parseFuncDef(Node node,SymbolTable table) {
+        //FuncDef,  // 函数定义  FuncType Ident '(' [FuncFParams] ')' Block
         FuncDef funcDef = new FuncDef();
         funcDef.setDefineLine(node.getLine());
         ArrayList<Node> children = node.getChildren();
+        
+        Integer curNum = blockNum;
+        blockNum++;
+        midCodes.add(new MidCode(Operation.LABEL,curNum.toString(),"start"));
         if (children.size() >= 5) {
             Node type = node.getFirstChild().unwrap();
             funcDef.setType(tranType(type));
             LeafNode ident = (LeafNode) children.get(1);
             funcDef.setIdent(ident.getValue());
+            MidCode code = new MidCode(Operation.FUNC,ident.getValue(),node.getFirstLeafNode().getValue());
+            midCodes.add(code);
         }
         
         ArrayList<SingleItem> parameters = null;
         if (children.size() == 6) { // 有参数
-            parameters = parseFuncFParams(children.get(4));
+            parameters = parseFuncFParams(children.get(3));
             funcDef.addAllParams(parameters);
         }
         table.addFunc(funcDef,errorList);
@@ -256,6 +295,8 @@ public class SymbolTableBuilder {
         SymbolTable subTable = parseFuncBlock(subBlock,1,table,parameters,funcDef.getType());
         table.addChild(subTable);
         funcDef.setSymbolTable(subTable);
+        
+        midCodes.add(new MidCode(Operation.LABEL,curNum.toString(),"end"));
     }
     
     private ArrayList<SingleItem> parseFuncFParams(Node funcFParamsNode) {
@@ -266,6 +307,7 @@ public class SymbolTableBuilder {
         int index = 0;
         while(index < children.size()) {
             params.add(parseFuncFParam(children.get(index)));
+            index += 2;
         }
         
         return params;
@@ -276,23 +318,30 @@ public class SymbolTableBuilder {
         ArrayList<Node> children = funcFParamNode.getChildren();
         SingleItem item = new SingleItem(Variability.PARA);
         item.setDefineLine(funcFParamNode.getLine());
+        
+        MidCode midCode = new MidCode(Operation.PARA);
         if (children.size() >= 2) {
             LeafNode ident = (LeafNode)children.get(1);
             item.setIdent(ident.getValue());
+            midCode.setZ(ident.getValue());
         }
         
         if (children.size() == 2) {
             item.setDimension(Dimension.Single);
+            midCode.setX("0");
             item.setArraySpace(new ArraySpace());
         } else if (children.size() == 4) {
             item.setDimension(Dimension.Array1);
+            midCode.setX("1");
             ArraySpace arraySpace = new ArraySpace();
             arraySpace.setIgnoreFirst(true);
             item.setArraySpace(arraySpace);
         } else {
             item.setDimension(Dimension.Array2);
+            midCode.setX("2");
             item.setArraySpace(new ArraySpace(true,children.get(5).unwrap()));
         }
+        midCodes.add(midCode);
         return item;
     }
     
