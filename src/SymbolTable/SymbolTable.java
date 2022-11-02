@@ -12,8 +12,9 @@ public class SymbolTable {
     private Integer depth;
     private SymbolTable parent;
     private ArrayList<SymbolTable> children;
-    private HashMap<String,FuncDef> funcs;
-    private HashMap<String,SingleItem> items;
+    private ArrayList<FuncDef> funcs;
+    private ArrayList<SingleItem> items;
+    // todo 顺序有意义，符号表这里应该要改改
     private Node bindingNode;   // block，CompUnit
     private Integer startLine;
     private Integer endLine;
@@ -21,14 +22,14 @@ public class SymbolTable {
     public SymbolTable(Integer depth,SymbolTable parent) {
         if (depth == 0) {
             this.parent = null;
-            this.funcs = new HashMap<>();
+            this.funcs = new ArrayList<>();
         } else {
             this.parent = parent;
             this.funcs = null;
         }
         this.depth = depth;
         this.children = new ArrayList<>();
-        this.items = new HashMap<>();
+        this.items = new ArrayList<>();
     }
     
     public void setLine(Integer startLine,Integer endLine) {
@@ -44,13 +45,22 @@ public class SymbolTable {
     }
     
     public void addItem(SingleItem item, ArrayList<MyError> errorList) {
-        if (items.containsKey(item.getIdent())) {
+        if (hasDefineItem(item)) {
             MyError error = new MyError(ErrorTYPE.Redefine_b);
             error.setLine(item.getDefineLine());
             errorList.add(error);
         } else {
-            items.put(item.getIdent(),item);
+            items.add(item);
         }
+    }
+    
+    private boolean hasDefineItem(SingleItem newItem) {
+        for(SingleItem item:items) {
+            if (item.getIdent().equals(newItem.getIdent())) {
+                return true;
+            }
+        }
+        return false;
     }
     
     public void addAllItem(ArrayList<SingleItem> items,ArrayList<MyError> errorList) {
@@ -63,13 +73,22 @@ public class SymbolTable {
     }
     
     public void addFunc(FuncDef func,ArrayList<MyError> errorList) {
-        if (funcs.containsKey(func.getIdent())) {
+        if (hasDefineFunc(func)) {
             MyError error = new MyError(ErrorTYPE.Redefine_b);
             error.setLine(func.getDefineLine());
             errorList.add(error);
         } else {
-            funcs.put(func.getIdent(),func);
+            funcs.add(func);
         }
+    }
+    
+    private boolean hasDefineFunc(FuncDef newFunc) {
+        for(FuncDef func:funcs) {
+            if (func.getIdent().equals(newFunc.getIdent())) {
+                return true;
+            }
+        }
+        return false;
     }
     
     public void addChild(SymbolTable table) {
