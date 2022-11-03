@@ -402,21 +402,12 @@ public class SymbolTableBuilder {
     
     private ExpItem AddExp(Node addNode) {   // 上面出现的Exp,ConstExp,都转换到AddExp处理
         int i = 0;
+        
         if (typeCheckBranch(addNode.childIterator(i),NonTerminator.MulExp)) {
             return MulExp(addNode.childIterator(i));
         } else {
             ExpItem x = AddExp(addNode.childIterator(i));
             i++;
- //           Node child = addNode.childIterator(i);
-//
-//
-//
-//            System.out.println(child.toString() + "place1");
-//            LeafNode leaf = child.getFirstLeafNode();
-//            System.out.println(leaf.toString() + "place2");
-//            Operation op = leaf.toOp();
-//            System.out.println(op.toString() + "place3");
-            
             Operation op = addNode.childIterator(i).getFirstLeafNode().toOp();
             i++;
             ExpItem y = MulExp(addNode.childIterator(i));
@@ -464,7 +455,7 @@ public class SymbolTableBuilder {
             }
         } else if (typeCheckBranch(unaryNode.childIterator(0),NonTerminator.UnaryOp)) { // UnaryOp UnaryExp
             //UnaryOp,  '+' | '−' | '!' '!'仅出现在条件表达式中  todo !补充实现，因为暂时没有条件表达式
-            ExpItem x = new ExpItem(0);
+            ExpItem x = new ExpItem("intConst",0);
             Operation op = unaryNode.childIterator(0).getFirstLeafNode().toOp();
             ExpItem y = UnaryExp(unaryNode.childIterator(1));
             ExpItem z = new ExpItem(op,x,y,localNum);
@@ -472,14 +463,22 @@ public class SymbolTableBuilder {
             midCodes.add(z.toMidCode());
             return z;
         } else { // ident '(' [FuncRParams] ')'
+            // FuncRParams → Exp { ',' Exp }
             // todo 函数调用的错误处理在这里实现
-            //Node
             
-            //push x
-            //push y
-            //call tar
-            return null;
-            // todo 测试一下先
+            Node funcRParams = unaryNode.childIterator(2);
+            int i = 0;
+            while (i < funcRParams.getChildren().size()) {
+                ExpItem paraReal = AddExp(funcRParams.childIterator(i).unwrap());
+                midCodes.add(new MidCode(Operation.PUSH,paraReal.getStr()));
+                i += 2;
+            }
+            midCodes.add(new MidCode(Operation.CALL,unaryNode.getFirstLeafNode().getValue()));
+            ExpItem retValue = new ExpItem("retValue",localNum);
+            localNum++;
+            midCodes.add(new MidCode(Operation.RETVALUE,retValue.getStr()));
+            
+            return retValue;
         }
     }
     

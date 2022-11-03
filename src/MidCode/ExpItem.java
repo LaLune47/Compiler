@@ -4,7 +4,8 @@ import component.Token;
 import component.TokenTYPE;
 
 public class ExpItem {
-    private Integer num;
+    private Integer localNum;
+    
     private Operation op;
     private ExpItem item1;
     private ExpItem item2;
@@ -23,7 +24,7 @@ public class ExpItem {
         this.item1 = item1;
         this.item2 = item2;
         this.op = op;
-        this.num = localNum;
+        this.localNum = localNum;
     }
     
     public ExpItem(Token token) {
@@ -38,10 +39,16 @@ public class ExpItem {
         }
     }
     
-    public ExpItem(Integer num) {
-        this.isIdent = false;
-        this.isNum = true;
-        this.intConst = new Token(-1,TokenTYPE.INTCON,num.toString());
+    public ExpItem(String str,Integer num) {
+        if (str.equals("intConst")) {
+            this.isIdent = false;
+            this.isNum = true;
+            this.intConst = new Token(-1,TokenTYPE.INTCON,num.toString());
+        } else if (str.equals("retValue")) {
+            this.isIdent = false;
+            this.isNum = false;
+            this.localNum = num;
+        }
     }
     
     public String getStr() {
@@ -50,7 +57,7 @@ public class ExpItem {
         } else if (this.isIdent) {
             return this.ident.getValue();
         } else {
-            return "t&" + num.toString();
+            return "t&" + localNum.toString();
         }
     }
     

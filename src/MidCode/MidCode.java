@@ -64,7 +64,7 @@ public class MidCode {
                     return "---------LABEL " + z + " " + x + "--------->";
                 }
             case PARA:
-                if (x.equals("0")) {
+                if (x.equals("0")) {   // todo 形参数组
                     return "para int " + z;
                 } else if (x.equals("1")) {
                     return "para int " + z + "[]";
@@ -85,6 +85,12 @@ public class MidCode {
                 return z + " = " + x + " / " + y;
             case MODOP:
                 return z + " = " + x + " % " + y;
+            case PUSH:
+                return "push " + z;  // todo 实参数组
+            case RETVALUE:
+                return "retValue " + z;
+            case CALL:
+                return "call " + z;
             default:
                 return null;
         }
