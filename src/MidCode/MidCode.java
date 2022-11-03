@@ -91,8 +91,17 @@ public class MidCode {
                 return "retValue " + z;
             case CALL:
                 return "call " + z;
+            case RET:              // 标记funcBlock结束
+                if (z != null)
+                    return "RET  " + z;
+                else
+                    return "RET null";
             default:
                 return null;
         }
+    }
+    
+    public boolean isRet() {
+        return op.equals(Operation.RET);
     }
 }

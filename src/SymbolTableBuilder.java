@@ -75,6 +75,11 @@ public class SymbolTableBuilder {
         SymbolTable symbolTable = parseBlock(block,depth,parentTable);
         symbolTable.addAllItem(parameters,errorList);
         funcReturnError(block,funcType);
+        
+        int length = midCodes.size();
+        if (!midCodes.get(length - 1).isRet()) {
+            midCodes.add(new MidCode(Operation.RET));  // 标记函数结束的,多出来一句
+        }
         return symbolTable;
     }
     
@@ -394,9 +399,17 @@ public class SymbolTableBuilder {
             SymbolTable subTable = parseBlock(subBlock,depth + 1,table);
             midCodes.add(new MidCode(Operation.LABEL,curNum.toString(),"end"));
             table.addChild(subTable);
+        } else if (typeCheckLeaf(stmt.getFirstLeafNode(),TokenTYPE.RETURNTK)) {
+            if (stmt.childIterator(1).equals(TokenTYPE.SEMICN)) {  // return ;
+                // 什么都不用做，外层做了
+            } else {
+                ExpItem z = AddExp(stmt.childIterator(1).unwrap());
+                midCodes.add(new MidCode(Operation.RET,z.getStr()));
+            }
         }
-//        else if
-
+        
+        // todo 各种语句分别处理；
+        // todo 读语句、写语句、赋值语句
         
     }
     
