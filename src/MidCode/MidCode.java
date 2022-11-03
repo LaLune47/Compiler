@@ -92,10 +92,22 @@ public class MidCode {
             case CALL:
                 return "call " + z;
             case RET:              // 标记funcBlock结束
-                if (z != null)
+                if (z != null) {
                     return "RET  " + z;
-                else
+                }
+                else {
                     return "RET null";
+                }
+            case SCAN:
+                return "scan " + z;
+            case ASSIGNOP:
+                return z + " = " + x;
+            case STRCON:
+                return "const str " + z;
+            case PRINTSTR:   //写字符串
+                return "print \"" + z + "\"";
+            case PRINTEXP:   //写变量
+                return "print " + z;
             default:
                 return null;
         }

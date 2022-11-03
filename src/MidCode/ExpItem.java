@@ -44,7 +44,7 @@ public class ExpItem {
             this.isIdent = false;
             this.isNum = true;
             this.intConst = new Token(-1,TokenTYPE.INTCON,num.toString());
-        } else if (str.equals("retValue")) {
+        } else if (str.equals("retValue") || str.equals("scan")) {
             this.isIdent = false;
             this.isNum = false;
             this.localNum = num;

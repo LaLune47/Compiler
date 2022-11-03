@@ -66,7 +66,9 @@ public enum Operation {
     RETVALUE, //有返回值函数返回的结果
     
     SCAN,  //读
-    PRINT, //写
+    STRCON, // 常量字符串
+    PRINTEXP, //写变量
+    PRINTSTR, //写字符串
     
     CONST, //常量
     ARRAY, //数组

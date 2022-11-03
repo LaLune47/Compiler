@@ -381,16 +381,19 @@ public class SymbolTableBuilder {
     
     private void Stmt(Node stmt,SymbolTable table,Integer depth){
     /*  Stmt →
-        第一次: LVal '=' Exp ';'
-        第一次: | [Exp] ';'
         第一次: | Block
+        第一次: | 'return' [Exp] ';' // f i
+        第一次: | [Exp] ';'
+        第一次: LVal '=' Exp ';'
+        第一次: | LVal '=' 'getint''('')'';' // h i j
+        
+        第一次: | 'printf''('FormatString{,Exp}')'';' // i j l
+        
         | 'if' '(' Cond ')' Stmt [ 'else' Stmt ]
         | 'while' '(' Cond ')' Stmt // j
         | 'break' ';' | 'continue' ';' // i m
-        第一次: | 'return' [Exp] ';' // f i
-        第一次: | LVal '=' 'getint''('')'';' // h i j
-        第一次: | 'printf''('FormatString{,Exp}')'';' // i j l
     */
+        // todo 各种语句分别处理；
         if (typeCheckBranch(stmt.getFirstChild(),NonTerminator.Block)) {
             Node subBlock = stmt.getFirstChild();
             Integer curNum = blockNum;
@@ -406,11 +409,54 @@ public class SymbolTableBuilder {
                 ExpItem z = AddExp(stmt.childIterator(1).unwrap());
                 midCodes.add(new MidCode(Operation.RET,z.getStr()));
             }
+        } else if (typeCheckBranch(stmt.getFirstChild(),NonTerminator.Exp)) {
+            AddExp(stmt.childIterator(0).unwrap());
+        } else if (typeCheckBranch(stmt.getFirstChild(),NonTerminator.LVal)) {
+            ExpItem xItem;
+            if (typeCheckBranch(stmt.childIterator(2),NonTerminator.Exp)) {
+                xItem = AddExp(stmt.childIterator(2).unwrap());
+            } else {
+                xItem = new ExpItem("scan",localNum);
+                localNum++;
+                midCodes.add(new MidCode(Operation.SCAN,xItem.getStr()));
+            }
+            // LVal  Ident {'[' Exp ']'}
+            Node lVal = stmt.getFirstChild();
+            ExpItem z = new ExpItem(lVal.getFirstLeafNode().getToken());   // todo 数组再改
+    
+            midCodes.add(new MidCode(Operation.ASSIGNOP,z.getStr(),xItem.getStr()));
+        } else if (typeCheckLeaf(stmt.getFirstLeafNode(),TokenTYPE.PRINTFTK)) {
+            // 'printf''('FormatString{,Exp}')'';' // i j l
+            String origin = stmt.childIterator(2).getFirstLeafNode().getValue();  //自带引号
+            ArrayList<MidCode> printCodes = new ArrayList<>();
+            
+            StringBuffer buffer = new StringBuffer();
+            
+            
+            int index = 4; // exp 最开始可能出现的地方
+            for(int i = 1;i < origin.length()-1;i++) {
+                if (!origin.substring(i,i + 1).equals("%")) {
+                    buffer.append(origin.substring(i,i + 1));
+                } else {
+                    if (buffer.length() != 0) {
+                        printCodes.add(new MidCode(Operation.PRINTSTR,buffer.toString()));
+                        midCodes.add(new MidCode(Operation.STRCON,buffer.toString()));
+                        buffer.setLength(0);
+                    }
+                    ExpItem exp = AddExp(stmt.childIterator(index).unwrap());
+                    printCodes.add(new MidCode(Operation.PRINTEXP,exp.getStr()));
+                    
+                    buffer.setLength(0);
+                    i++;
+                    index += 2;
+                }
+            }
+            if (buffer.length() != 0) {
+                printCodes.add(new MidCode(Operation.PRINTSTR,buffer.toString()));
+                midCodes.add(new MidCode(Operation.STRCON,buffer.toString()));
+            }
+            midCodes.addAll(printCodes);
         }
-        
-        // todo 各种语句分别处理；
-        // todo 读语句、写语句、赋值语句
-        
     }
     
     private ExpItem AddExp(Node addNode) {   // 上面出现的Exp,ConstExp,都转换到AddExp处理
