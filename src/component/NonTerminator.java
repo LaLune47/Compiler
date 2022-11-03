@@ -35,6 +35,15 @@ public enum NonTerminator {
                 Block嵌套
                 if、while等关键词
             */
+        /*
+        Stmt → LVal '=' Exp ';' | [Exp] ';' | Block // h i
+            | 'if' '(' Cond ')' Stmt [ 'else' Stmt ] // j
+            | 'while' '(' Cond ')' Stmt // j
+            | 'break' ';' | 'continue' ';' // i m
+            | 'return' [Exp] ';' // f i
+            | LVal '=' 'getint''('')'';' // h i j
+            | 'printf''('FormatString{,Exp}')'';' // i j l
+         */
     
     
     // exp部分

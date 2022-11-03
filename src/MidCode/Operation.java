@@ -86,5 +86,5 @@ public enum Operation {
     GETARRAY,  //取数组的值  t = a[]
     PUTARRAY,  //给数组赋值  a[] = t
     
-    DEBUG,
+    DEFAULT
 }

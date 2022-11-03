@@ -59,50 +59,6 @@ public class SingleItem {
         }
     }
     
-    public void setInitValue(Node node) {
-        //ConstInitVal, // 常量初值   ConstExp | '{' [ ConstInitVal { ',' ConstInitVal } ] '}'
-        // InitVal,      // 变量初值   Exp | '{' [ InitVal { ',' InitVal } ] '}
-        // 最多只有两层所以采用了暴力手段
-        // node 为 InitVal 或者 ConstInitVal
-        this.isInit = true;
-        
-        ArrayList<Node> children = node.getChildren();
-        if (children.size() > 0 && typeCheckLeaf(children.get(0),TokenTYPE.LBRACE)) {
-            Node firstInit = children.get(1);
-            ArrayList<Node> firstInitChildren = firstInit.getChildren();
-            if (firstInitChildren.size() > 0 && typeCheckLeaf(firstInitChildren.get(0),TokenTYPE.LBRACE)) {
-                // 两层
-                int index = 1;
-                while(index < children.size()) {
-                    Node curInit = children.get(index);
-                    ArrayList<Node> tempList = (ArrayList<Node>) parseInitVal(curInit).clone();
-                    initValueArray2.add(tempList);
-                    index += 2;
-                }
-            } else {
-                // 一层
-                initValueArray1 = (ArrayList<Node>) parseInitVal(node).clone();
-            }
-        } else {
-            initValue = unwrap(unwrap(node));
-        }
-    }
-    
-    private ArrayList<Node> parseInitVal(Node InitValNode) {
-        // 特殊:InitValNode为单层,
-        // 即child 一定为 '{' + InitValNode(Exp) + ',' +...+ InitValNode(Exp) + '}'
-        // 返回时 一定已经unwrap到addExp
-        int index = 1;
-        ArrayList<Node> addExpNode = new ArrayList<>();
-        ArrayList<Node> children = InitValNode.getChildren();
-        while(index < children.size()) {
-            Node subInitValNode = children.get(index);
-            addExpNode.add(unwrap(unwrap(subInitValNode)));
-            index += 2;
-        }
-        return addExpNode;
-    }
-    
     private boolean typeCheckLeaf(Node node, TokenTYPE type) {
         if (node instanceof LeafNode) {
             return ((LeafNode)node).getTokenType().equals(type);
@@ -125,4 +81,49 @@ public class SingleItem {
     public String getIdent() {
         return ident;
     }
+    
+    // todo 变量和数组多层初始化的问题，需要迁移到SymbolTableBuilder类中
+//    public void setInitValue(Node node) {
+//        //ConstInitVal, // 常量初值   ConstExp | '{' [ ConstInitVal { ',' ConstInitVal } ] '}'
+//        // InitVal,      // 变量初值   Exp | '{' [ InitVal { ',' InitVal } ] '}
+//        // 最多只有两层所以采用了暴力手段
+//        // node 为 InitVal 或者 ConstInitVal
+//        this.isInit = true;
+//
+//        ArrayList<Node> children = node.getChildren();
+//        if (children.size() > 0 && typeCheckLeaf(children.get(0),TokenTYPE.LBRACE)) {
+//            Node firstInit = children.get(1);
+//            ArrayList<Node> firstInitChildren = firstInit.getChildren();
+//            if (firstInitChildren.size() > 0 && typeCheckLeaf(firstInitChildren.get(0),TokenTYPE.LBRACE)) {
+//                // 两层
+//                int index = 1;
+//                while(index < children.size()) {
+//                    Node curInit = children.get(index);
+//                    ArrayList<Node> tempList = (ArrayList<Node>) parseInitVal(curInit).clone();
+//                    initValueArray2.add(tempList);
+//                    index += 2;
+//                }
+//            } else {
+//                // 一层
+//                initValueArray1 = (ArrayList<Node>) parseInitVal(node).clone();
+//            }
+//        } else {
+//            initValue = unwrap(unwrap(node));
+//        }
+//    }
+//
+//    private ArrayList<Node> parseInitVal(Node InitValNode) {
+//        // 特殊:InitValNode为单层,
+//        // 即child 一定为 '{' + InitValNode(Exp) + ',' +...+ InitValNode(Exp) + '}'
+//        // 返回时 一定已经unwrap到addExp
+//        int index = 1;
+//        ArrayList<Node> addExpNode = new ArrayList<>();
+//        ArrayList<Node> children = InitValNode.getChildren();
+//        while(index < children.size()) {
+//            Node subInitValNode = children.get(index);
+//            addExpNode.add(unwrap(unwrap(subInitValNode)));
+//            index += 2;
+//        }
+//        return addExpNode;
+//    }
 }

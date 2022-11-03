@@ -63,6 +63,9 @@ public class BranchNode implements Node {
     
     @Override
     public LeafNode getFirstLeafNode() {
+        if (this == null) {
+            return null;
+        }
         Node node = this;
         while (node instanceof BranchNode) {
             node = ((BranchNode)node).unwrap();
@@ -90,7 +93,7 @@ public class BranchNode implements Node {
     @Override
     public Node unwrap() { // 去掉一层
         Node tempNode = this;
-        if (!tempNode.getChildren().isEmpty()) {
+        if (tempNode.getChildren() != null &&!tempNode.getChildren().isEmpty()) {
             tempNode = this.getChildren().get(0);
         }
         return tempNode;
@@ -104,6 +107,9 @@ public class BranchNode implements Node {
     @Override
     public Node childIterator(Integer index) {
         Node parent = this;
+        if (this == null) {
+            return null;
+        }
         ArrayList<Node> children = ((BranchNode) parent).getChildren();
         if (children != null && children.size() > index) {
             return children.get(index);

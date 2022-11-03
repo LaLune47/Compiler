@@ -74,7 +74,17 @@ public class MidCode {
             case MAIN:
                 return "\nMAIN\n";
             case EXIT:
-                return "\n      vg<------------------EXIT------------------>";
+                return "\n<------------------EXIT------------------>";
+            case PLUSOP:
+                return z + " = " + x + " + " + y;
+            case MINUOP:
+                return z + " = " + x + " - " + y;
+            case MULTOP:
+                return z + " = " + x + " * " + y;
+            case DIVOP:
+                return z + " = " + x + " / " + y;
+            case MODOP:
+                return z + " = " + x + " % " + y;
             default:
                 return null;
         }

@@ -1,5 +1,6 @@
 package AST;
 
+import MidCode.Operation;
 import component.Token;
 import component.TokenTYPE;
 
@@ -41,12 +42,12 @@ public class LeafNode implements Node {
     
     @Override
     public LeafNode getFirstLeafNode() {
-        return null;
+        return this;
     }
     
     @Override
     public LeafNode getLastLeafNode() {
-        return null;
+        return this;
     }
     
     @Override
@@ -60,6 +61,10 @@ public class LeafNode implements Node {
     
     public String getValue() {
         return token.getValue();
+    }
+    
+    public Token getToken() {
+        return token;
     }
     
     @Override
@@ -78,6 +83,23 @@ public class LeafNode implements Node {
         return null;
     }
 
-
-
+    public Operation toOp() {
+        if (this == null) {
+            return Operation.DEFAULT;
+        }
+        switch (token.getType()) {
+            case PLUS:
+                return Operation.PLUSOP;
+            case MINU:
+                return Operation.MINUOP;
+            case MULT:
+                return Operation.MULTOP;
+            case DIV:
+                return Operation.DIVOP;
+            case MOD:
+                return Operation.MODOP;
+            default:
+                return Operation.DEFAULT;
+        }
+    }
 }

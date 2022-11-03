@@ -5,6 +5,7 @@ import AST.Node;
 import MidCode.MidCode;
 import MidCode.MidGenerator;
 import MidCode.Operation;
+import MidCode.ExpItem;
 import SymbolTable.SymbolTable;
 import SymbolTable.SingleItem;
 import SymbolTable.Variability;
@@ -25,6 +26,7 @@ public class SymbolTableBuilder {
     private MidGenerator generator;
     private ArrayList<MidCode> midCodes;
     private static Integer blockNum = 1;
+    private static Integer localNum = 1; // 局部变量编号
     
     public SymbolTableBuilder(Node ast,ArrayList<MyError> errorList) {
         this.ast = ast;
@@ -119,15 +121,16 @@ public class SymbolTableBuilder {
                 if (typeCheckBranch(declOrStmt,NonTerminator.Decl)) {
                     parseDecl(declOrStmt,table);
                 } else {
-                    if (typeCheckBranch(declOrStmt.getFirstChild(),NonTerminator.Block)) {
-                        Node subBlock = declOrStmt.getFirstChild();
-                        Integer curNum = blockNum;
-                        midCodes.add(new MidCode(Operation.LABEL,curNum.toString(),"start"));
-                        blockNum++;
-                        SymbolTable subTable = parseBlock(subBlock,depth + 1,table);
-                        midCodes.add(new MidCode(Operation.LABEL,curNum.toString(),"end"));
-                        table.addChild(subTable);
-                    }
+                    Stmt(declOrStmt,table,depth);
+//                    if (typeCheckBranch(declOrStmt.getFirstChild(),NonTerminator.Block)) {
+//                        Node subBlock = declOrStmt.getFirstChild();
+//                        Integer curNum = blockNum;
+//                        midCodes.add(new MidCode(Operation.LABEL,curNum.toString(),"start"));
+//                        blockNum++;
+//                        SymbolTable subTable = parseBlock(subBlock,depth + 1,table);
+//                        midCodes.add(new MidCode(Operation.LABEL,curNum.toString(),"end"));
+//                        table.addChild(subTable);
+//                    }
                 }
             }
         }
@@ -207,21 +210,19 @@ public class SymbolTableBuilder {
             item.setDimension(Dimension.Single);
             item.setArraySpace(new ArraySpace());
             midCode = new MidCode(Operation.VAR,item.getIdent());
-        } else if (4 <= children.size() && typeCheckLeaf(children.get(1),TokenTYPE.LBRACK)) {
-            if (7 <= children.size() && typeCheckLeaf(children.get(4),TokenTYPE.LBRACK)) {
-                item.setDimension(Dimension.Array2);
-                item.setArraySpace(new ArraySpace(children.get(2),children.get(5)));
-            } else {
-                item.setDimension(Dimension.Array1);
-                item.setArraySpace(new ArraySpace(children.get(2)));
+            if (children.size() == 3) {
+                midCode.setX(setInitValue(children.get(2)).getStr());
             }
         }
-    
-        if (index < children.size() && index != 0) {
-            item.setInitValue(children.get(index));
-            //midCode.varSetX(children.get(index));   todo 常量、变量、初值，到底怎么解决，好像跟表达式有关
-        }
-    
+//        else if (4 <= children.size() && typeCheckLeaf(children.get(1),TokenTYPE.LBRACK)) {
+//            if (7 <= children.size() && typeCheckLeaf(children.get(4),TokenTYPE.LBRACK)) {
+//                item.setDimension(Dimension.Array2);
+//                item.setArraySpace(new ArraySpace(children.get(2),children.get(5)));
+//            } else {
+//                item.setDimension(Dimension.Array1);
+//                item.setArraySpace(new ArraySpace(children.get(2)));
+//            }
+//        }
         table.addItem(item,errorList);
         midCodes.add(midCode);
     }
@@ -243,26 +244,34 @@ public class SymbolTableBuilder {
             item.setIdent(((LeafNode)children.get(0)).getValue());
             midCode = new MidCode(Operation.CONST,item.getIdent());
             index = 2;
-        } else if (5 < children.size() && typeCheckLeaf(children.get(1),TokenTYPE.LBRACK)) {
-            item.setIdent(((LeafNode)children.get(0)).getValue());
-            if (8 < children.size() && typeCheckLeaf(children.get(4),TokenTYPE.LBRACK)) {
-                item.setDimension(Dimension.Array2);
-                item.setArraySpace(new ArraySpace(children.get(2),children.get(5)));
-                index = 8;
-            } else {
-                item.setDimension(Dimension.Array1);
-                item.setArraySpace(new ArraySpace(children.get(2)));
-                index = 5;
+            if (children.size() == 3) {
+                midCode.setX(setInitValue(children.get(index)).getStr());
             }
         }
-        
-        if (index < children.size()) {
-            item.setInitValue(children.get(index));
-            //midCode.varSetX(children.get(index));   todo 常量、变量、初值，到底怎么解决，好像跟表达式有关
-        }
-        
+//        else if (5 < children.size() && typeCheckLeaf(children.get(1),TokenTYPE.LBRACK)) {
+//            item.setIdent(((LeafNode)children.get(0)).getValue());
+//            if (8 < children.size() && typeCheckLeaf(children.get(4),TokenTYPE.LBRACK)) {
+//                item.setDimension(Dimension.Array2);
+//                item.setArraySpace(new ArraySpace(children.get(2),children.get(5)));
+//                index = 8;
+//            } else {
+//                item.setDimension(Dimension.Array1);
+//                item.setArraySpace(new ArraySpace(children.get(2)));
+//                index = 5;
+//            }
+//        }
         table.addItem(item,errorList);
         midCodes.add(midCode);
+    }
+    
+    private ExpItem setInitValue(Node node) {
+        //ConstInitVal, // 常量初值   ConstExp | '{' [ ConstInitVal { ',' ConstInitVal } ] '}'
+        // InitVal,      // 变量初值   Exp | '{' [ InitVal { ',' InitVal } ] '}
+        // node 为 InitVal 或者 ConstInitVal
+        // todo 数组初始化的很多东西，惊喜的是parseInitVal应该已经把多层初始化搞完了，见SingleItem类
+        
+        Node addExp = node.unwrap().unwrap();
+        return AddExp(addExp);
     }
     
     private void parseFuncDef(Node node,SymbolTable table) {
@@ -364,4 +373,116 @@ public class SymbolTableBuilder {
         }
         return null;
     }
+    
+    private void Stmt(Node stmt,SymbolTable table,Integer depth){
+    /*  Stmt →
+        第一次: LVal '=' Exp ';'
+        第一次: | [Exp] ';'
+        第一次: | Block
+        | 'if' '(' Cond ')' Stmt [ 'else' Stmt ]
+        | 'while' '(' Cond ')' Stmt // j
+        | 'break' ';' | 'continue' ';' // i m
+        第一次: | 'return' [Exp] ';' // f i
+        第一次: | LVal '=' 'getint''('')'';' // h i j
+        第一次: | 'printf''('FormatString{,Exp}')'';' // i j l
+    */
+        if (typeCheckBranch(stmt.getFirstChild(),NonTerminator.Block)) {
+            Node subBlock = stmt.getFirstChild();
+            Integer curNum = blockNum;
+            midCodes.add(new MidCode(Operation.LABEL,curNum.toString(),"start"));
+            blockNum++;
+            SymbolTable subTable = parseBlock(subBlock,depth + 1,table);
+            midCodes.add(new MidCode(Operation.LABEL,curNum.toString(),"end"));
+            table.addChild(subTable);
+        }
+//        else if
+
+        
+    }
+    
+    private ExpItem AddExp(Node addNode) {   // 上面出现的Exp,ConstExp,都转换到AddExp处理
+        int i = 0;
+        if (typeCheckBranch(addNode.childIterator(i),NonTerminator.MulExp)) {
+            return MulExp(addNode.childIterator(i));
+        } else {
+            ExpItem x = AddExp(addNode.childIterator(i));
+            i++;
+ //           Node child = addNode.childIterator(i);
+//
+//
+//
+//            System.out.println(child.toString() + "place1");
+//            LeafNode leaf = child.getFirstLeafNode();
+//            System.out.println(leaf.toString() + "place2");
+//            Operation op = leaf.toOp();
+//            System.out.println(op.toString() + "place3");
+            
+            Operation op = addNode.childIterator(i).getFirstLeafNode().toOp();
+            i++;
+            ExpItem y = MulExp(addNode.childIterator(i));
+            
+            ExpItem z = new ExpItem(op,x,y,localNum);
+            localNum++;
+            midCodes.add(z.toMidCode());
+            return z;
+        }
+    }
+    
+    private ExpItem MulExp(Node mulNode) {
+        int i = 0;
+        if (typeCheckBranch(mulNode.childIterator(i),NonTerminator.UnaryExp)) {
+            return UnaryExp(mulNode.childIterator(i));
+        } else {
+            ExpItem x = MulExp(mulNode.childIterator(i));
+            i++;
+            Operation op = mulNode.childIterator(i).getFirstLeafNode().toOp();
+            i++;
+            ExpItem y = UnaryExp(mulNode.childIterator(i));
+            
+            ExpItem z = new ExpItem(op,x,y,localNum);
+            localNum++;
+            midCodes.add(z.toMidCode());
+            return z;
+        }
+    }
+    
+    private ExpItem UnaryExp(Node unaryNode) {
+        if (typeCheckBranch(unaryNode.childIterator(0),NonTerminator.PrimaryExp)) { //  PrimaryExp
+            // '(' Exp ')' | LVal | Number
+            Node primaryExp = unaryNode.childIterator(0);
+            if (primaryExp.childIterator(0) instanceof LeafNode) {
+                Node exp = primaryExp.childIterator(1);
+                return AddExp(exp.unwrap());
+            } else if (typeCheckBranch(primaryExp.childIterator(0),NonTerminator.Number)) {
+                Node number = primaryExp.childIterator(0);
+                return new ExpItem(number.getFirstLeafNode().getToken());
+            } else {
+                // LVal → Ident {'[' Exp ']'}  todo 数组实现补充
+                // LVal → Ident
+                Node lVal = primaryExp.childIterator(0);
+                return new ExpItem(lVal.getFirstLeafNode().getToken());
+            }
+        } else if (typeCheckBranch(unaryNode.childIterator(0),NonTerminator.UnaryOp)) { // UnaryOp UnaryExp
+            //UnaryOp,  '+' | '−' | '!' '!'仅出现在条件表达式中  todo !补充实现，因为暂时没有条件表达式
+            ExpItem x = new ExpItem(0);
+            Operation op = unaryNode.childIterator(0).getFirstLeafNode().toOp();
+            ExpItem y = UnaryExp(unaryNode.childIterator(1));
+            ExpItem z = new ExpItem(op,x,y,localNum);
+            localNum++;
+            midCodes.add(z.toMidCode());
+            return z;
+        } else { // ident '(' [FuncRParams] ')'
+            // todo 函数调用的错误处理在这里实现
+            //Node
+            
+            //push x
+            //push y
+            //call tar
+            return null;
+            // todo 测试一下先
+        }
+    }
+    
+//    private Cond() {   // 最底层就是AddExp,调用实现
+//    }
 }
