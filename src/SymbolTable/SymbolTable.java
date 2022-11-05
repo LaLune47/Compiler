@@ -100,11 +100,15 @@ public class SymbolTable {
     }
     
     public Integer getValue(String ident) {
-        if (!items.containsKey(ident)) {
-            return null;
-        } else {
+        if (items.containsKey(ident)) {
             SingleItem item = items.get(ident);
             return item.getInit();
+        }
+        if (this.parent == null) {
+            System.out.println("定义错误");
+            return null;
+        } else {
+            return this.parent.getValue(ident);
         }
     }
     

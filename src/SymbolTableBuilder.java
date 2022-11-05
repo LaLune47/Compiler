@@ -15,6 +15,7 @@ import SymbolTable.FuncType;
 import component.ErrorTYPE;
 import component.NonTerminator;
 import component.TokenTYPE;
+import component.Token;
 
 import java.util.ArrayList;
 
@@ -253,7 +254,9 @@ public class SymbolTableBuilder {
             midCode = new MidCode(midOp.CONST,item.getIdent());
             index = 2;
             if (children.size() == 3) {
-                midCode.setX(setInitValue(children.get(index)).getStr());
+                Integer initValue = CalConst(children.get(2).getFirstChild(),table);  // todo 数组
+                item.setInit(initValue);
+                midCode.setX(initValue.toString());
             }
         }
 //        else if (5 < children.size() && typeCheckLeaf(children.get(1),TokenTYPE.LBRACK)) {
@@ -370,7 +373,10 @@ public class SymbolTableBuilder {
     }
     
     private boolean typeCheckLeaf(Node node, TokenTYPE type) {
-        return ((LeafNode)node).getTokenType().equals(type);
+        if (node instanceof LeafNode) {
+            return ((LeafNode)node).getTokenType().equals(type);
+        }
+        return false;
     }
     
     private FuncType tranType(Node type) {
@@ -542,6 +548,78 @@ public class SymbolTableBuilder {
             midCodes.add(new MidCode(midOp.RETVALUE,retValue.getStr()));
             
             return retValue;
+        }
+    }
+    
+    private Integer CalConst(Node node,SymbolTable table) {
+        if (node instanceof LeafNode) {
+            Token intCon = ((LeafNode) node).getToken();
+            return Integer.parseInt(intCon.getValue());
+        } else {
+            BranchNode curNode = (BranchNode) node;
+            NonTerminator type = curNode.getNonTerminator();
+            switch (type) {
+                case ConstExp:
+                case Number:
+                    return CalConst(curNode.unwrap(),table);
+                case AddExp:
+                    if (curNode.getChildren().size() == 1) {
+                        return CalConst(curNode.unwrap(),table);
+                    } else {
+                        Integer a = CalConst(curNode.childIterator(0),table);
+                        Integer b = CalConst(curNode.childIterator(2),table);
+                        Node op = curNode.childIterator(1);
+                        if (typeCheckLeaf(op,TokenTYPE.PLUS)) {
+                            return a + b;
+                        } else {
+                            return a - b;
+                        }
+                    }
+                case MulExp:
+                    if (curNode.getChildren().size() == 1) {
+                        return CalConst(curNode.unwrap(),table);
+                    } else {
+                        Integer a = CalConst(curNode.childIterator(0),table);
+                        Integer b = CalConst(curNode.childIterator(2),table);
+                        Node op = curNode.childIterator(1);
+                        if (typeCheckLeaf(op,TokenTYPE.MULT)) {
+                            return a * b;
+                        } else if (typeCheckLeaf(op,TokenTYPE.DIV)) {
+                            return a / b;
+                        } else {
+                            return a % b;
+                        }
+                    }
+                case UnaryExp:
+                    if (typeCheckLeaf(curNode.childIterator(0), TokenTYPE.IDENFR)) {
+                        System.out.println("ConstExp---函数调用错误");
+                        return null;
+                    } else if (typeCheckBranch(curNode.childIterator(0), NonTerminator.PrimaryExp)) {
+                        return CalConst(curNode.unwrap(),table);
+                    } else {  //+-UnaryExp
+                        Integer a = CalConst(curNode.childIterator(1),table);
+                        Node op = curNode.childIterator(0);
+                        if (typeCheckLeaf(op,TokenTYPE.PLUS)) {
+                            return a;
+                        } else if (typeCheckLeaf(op,TokenTYPE.MINU)) {
+                            return -a;
+                        }
+                    }
+                case PrimaryExp:
+                    // 基本表达式  → '(' Exp ')' | LVal | Number
+                    if (curNode.getChildren().size() == 3) {
+                        return CalConst(curNode.childIterator(1),table);
+                    } else {
+                        return CalConst(curNode.unwrap(),table);
+                    }
+                case LVal:
+                    // LVal  → Ident {'[' Exp ']'} todo 数组的情况补充！
+                    String ident = curNode.getFirstLeafNode().getValue();
+                    return table.getValue(ident);
+                default:
+                    System.out.println("const解析错误");
+                    return 0;
+            }
         }
     }
     
