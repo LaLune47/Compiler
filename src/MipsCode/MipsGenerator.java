@@ -234,49 +234,6 @@ public class MipsGenerator {
                     break;
                 case CALL:
                     // todo
-//                    Integer len = funcLength.get(midCode.z);
-//                    finalCodes.add(new FinalCode(mipsOp.addi,"$sp","$sp","",-4*len));
-//                    finalCodes.add(new FinalCode(mipsOp.sw, "$ra", "$sp", "", 4));
-//                    for (MidCode paraR:stackParaR) {
-//                        loadValue(paraR.z,"$t0");
-//                        finalCodes.add(new FinalCode(mipsOp.sw,"t0","sp"))
-//                    }
-//
-//
-//                    else if (mc.op.equals(midCode.operation.CALL)) {
-//                    for (int j = 0; j < pushOpstcak.size(); j++) {
-//                        midCode mcs = pushOpstcak.get(j);
-//                        if (mcs.x != null) {
-//                            loadAddress(mcs.z, "$t0");
-//                            loadValue(mcs.x, "$t1", false);
-//                            mipscodes.add(new Mipscode(Mipscode.operation.li, "$t2", "", "", Integer.parseInt(mcs.y) * 4));
-//                            mipscodes.add(new Mipscode(Mipscode.operation.mult, "$t2", "$t1", ""));
-//                            mipscodes.add(new Mipscode(Mipscode.operation.mflo, "$t2"));
-//                            mipscodes.add(new Mipscode(Mipscode.operation.add, "$t0", "$t0", "$t2"));
-//                        }
-//                        else {
-//                            loadAddress(mcs.z, "$t0");
-//                        }
-//                        mipscodes.add(new Mipscode(Mipscode.operation.sw, "$t0", "$sp", "", -4 * j));
-//                    }
-//                    pushOpstcak.clear();
-//                    mipscodes.add(new Mipscode(Mipscode.operation.debug, "----pushOpstcak"));
-//                    mipscodes.add(new Mipscode(Mipscode.operation.addi, "$sp", "$sp", "", -4 * funclength.get(mc.z) - 8));
-//                    mipscodes.add(new Mipscode(Mipscode.operation.sw, "$ra", "$sp", "", 4));
-//                    mipscodes.add(new Mipscode(Mipscode.operation.sw, "$fp", "$sp", "", 8));
-//                    mipscodes.add(new Mipscode(Mipscode.operation.addi, "$fp", "$sp", "", 4 * funclength.get(mc.z) + 8));
-//                    mipscodes.add(new Mipscode(Mipscode.operation.jal, mc.z));
-//                    mipscodes.add(new Mipscode(Mipscode.operation.lw, "$fp", "$sp", "", 8));
-//                    mipscodes.add(new Mipscode(Mipscode.operation.lw, "$ra", "$sp", "", 4));
-//                    mipscodes.add(new Mipscode(Mipscode.operation.addi, "$sp", "$sp", "", 4 * funclength.get(mc.z) + 8));
-//                }
-//
-                    
-                    
-                    
-                    
-                    
-                    
                     break;
                 case RETVALUE:
                     storeValue(midCode.z,"$v0",true);
