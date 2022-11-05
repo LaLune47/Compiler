@@ -11,33 +11,88 @@ public class MipsGenerator {
     private ArrayList<String> conStrings;
     private ArrayList<FinalCode> finalCodes;
     private static FinalCode space;
-    private Integer gloIntNum;
+    private Integer itemNum;
+    private boolean inMain = false;
+    private boolean inFunc = false;
+    private IntegerTable curTable = new IntegerTable(null);
     
     public MipsGenerator(ArrayList<MidCode> midCodes,ArrayList<String> conStrings) {
         this.midCodes = midCodes;
         this.conStrings = conStrings;
         this.finalCodes = new ArrayList<>();
         space = new FinalCode(mipsOp.space);
-        gloIntNum = 0;
+        itemNum = 0;
         genMips();
     }
     
-    //private void storeValue()
-    
-    private void defineInteger(MidCode midCode,IntegerTable table) {
-        Boolean isConst = midCode.op.equals(midOp.CONST);
-        ItemInteger item = new ItemInteger(midCode.z,isConst);
-        table.addItem(item);
-        if (midCode.x != null) {  // 存在初值
-            finalCodes.add(new FinalCode(mipsOp.li,"$t0",midCode.x));
-            finalCodes.add(new FinalCode(mipsOp.sw,"$t0","gp",null,gloIntNum*4));
-        }
-        gloIntNum++;
+    private boolean isImm(String origin) {
+        char c = origin.charAt(0);
+        return c <= '9' && c >= '0' || c == '-';
     }
     
-//    private String getInitVal(String constExp,IntegerTable table) {
-//        if ()
-//    }
+    private ItemInteger findItem(String name) {
+        IntegerTable table = curTable;
+        while (table != null) {
+            if (table.contains(name)) {
+                return table.getItem(name);
+            }
+            table = table.getParent();
+        }
+        return null;
+    }
+    
+    private Integer getOffset(String name) {
+        if (findItem(name) != null) {
+            return findItem(name).getOffset();
+        } else {
+            return 0;
+        }
+    }
+    
+    private Boolean getGlobal(String name) {
+        if (findItem(name) != null) {
+            return findItem(name).isGlobal();
+        } else {
+            return false;
+        }
+    }
+    
+    private void loadValue(String ident,String regName) {  //load, origin为数字或者已定义的ident
+        if (isImm(ident)) {
+            finalCodes.add(new FinalCode(mipsOp.li,regName,"","",Integer.parseInt(ident)));
+        } else {
+            boolean isGlobal = getGlobal(ident);
+            Integer offset = getOffset(ident);
+            if (isGlobal) {
+                finalCodes.add(new FinalCode(mipsOp.lw, regName, "$gp", "", 4 * offset));
+            } else {
+                finalCodes.add(new FinalCode(mipsOp.lw, regName, "$sp", "", -4 * offset));
+            }
+        }
+    }
+    
+    private void storeValue(String ident, String regName,boolean isNew) {
+        if (isNew) {
+            define(ident);
+        }
+        boolean isGlobal = getGlobal(ident);
+        Integer offset = getOffset(ident);
+        if (isGlobal) {
+            finalCodes.add(new FinalCode(mipsOp.sw, regName, "$gp", "", 4 * offset));
+        } else {
+            finalCodes.add(new FinalCode(mipsOp.sw, regName, "$sp", "", -4 * offset));
+        }
+    }
+    
+    private void define(String ident) {
+        if (curTable.contains(ident)) {
+            return;
+        }
+        ItemInteger item = new ItemInteger(ident,itemNum);
+        itemNum++;
+        curTable.addItem(item);
+        item.setTable(curTable);
+    }
     
     private void genMips() {
         // 数据区  字符串常量+ todo 数组
@@ -50,22 +105,77 @@ public class MipsGenerator {
         finalCodes.add(space);
         
         // 全局变量分配 + 函数分配 + main函数
-        IntegerTable globalTable = new IntegerTable(null);
+        
         finalCodes.add(new FinalCode(mipsOp.text));
         for (MidCode midCode:midCodes) {
-            if (midCode.op.equals(midOp.VAR) || midCode.op.equals(midOp.CONST)) {
-                defineInteger(midCode,globalTable);
+            switch (midCode.op) {
+                case VAR:
+                    if (midCode.x != null) {
+                        loadValue(midCode.x,"$t0");
+                        storeValue(midCode.z,"$t0",true);
+                    } else {
+                        define(midCode.z);
+                    }
+                    break;
+                case CONST:
+                    loadValue(midCode.x,"$t0");
+                    storeValue(midCode.z,"$t0",true);
+                    break;
+                case ASSIGNOP:
+                    loadValue(midCode.x,"$t0");
+                    storeValue(midCode.z,"$t0",true);  // 直接把所有中间代码里的中间变量都当作变量
+                    break;
+                case PLUSOP:
+                    loadValue(midCode.x, "$t0");
+                    loadValue(midCode.y, "$t1");
+                    finalCodes.add(new FinalCode(mipsOp.add,"$t2","$t0","$t1"));
+                    finalCodes.add(new FinalCode(mipsOp.debug,"------plus"));
+                    storeValue(midCode.z,"$t2",true);
+                    break;
+                case MINUOP:
+                    loadValue(midCode.x, "$t0");
+                    loadValue(midCode.y, "$t1");
+                    finalCodes.add(new FinalCode(mipsOp.sub,"$t2","$t0","$t1"));
+                    finalCodes.add(new FinalCode(mipsOp.debug,"------minu"));
+                    storeValue(midCode.z,"$t2",true);
+                    break;
+                case MULTOP:
+                    loadValue(midCode.x, "$t0");
+                    loadValue(midCode.y, "$t1");
+                    finalCodes.add(new FinalCode(mipsOp.mult,"$t0","$t1"));
+                    finalCodes.add(new FinalCode(mipsOp.mflo,"$t2"));
+                    finalCodes.add(new FinalCode(mipsOp.debug,"------mul"));
+                    storeValue(midCode.z,"$t2",true);
+                    break;
+                case DIVOP:
+                    loadValue(midCode.x, "$t0");
+                    loadValue(midCode.y, "$t1");
+                    finalCodes.add(new FinalCode(mipsOp.div,"$t0","$t1"));
+                    finalCodes.add(new FinalCode(mipsOp.mflo,"$t2"));
+                    finalCodes.add(new FinalCode(mipsOp.debug,"------div"));
+                    storeValue(midCode.z,"$t2",true);
+                    break;
+                case MODOP:
+                    loadValue(midCode.x, "$t0");
+                    loadValue(midCode.y, "$t1");
+                    finalCodes.add(new FinalCode(mipsOp.div,"$t0","$t1"));
+                    finalCodes.add(new FinalCode(mipsOp.mfhi,"$t2"));
+                    finalCodes.add(new FinalCode(mipsOp.debug,"------mod"));
+                    storeValue(midCode.z,"$t2",true);
+                    break;
+                default:
+                    break;
             }
         }
-        
-        
-        
     }
     
     public void printMips() {
         int strNum = 0;
         for (FinalCode code:finalCodes) {
             switch (code.op) {
+                case debug:
+                    System.out.println(code.z);
+                    break;
                 case space:
                     System.out.println();
                     break;
@@ -79,12 +189,32 @@ public class MipsGenerator {
                     System.out.println("s_" + code.z +": .asciiz \"" + code.x + "\"");
                     break;
                 case li:
-                    System.out.println("li " + code.z + "," + code.x);
+                    System.out.println("li " + code.z + "," + code.imm);
                     break;
                 case sw:
                     System.out.println("sw " + code.z + "," + code.imm + "("+ code.x + ")");
                     break;
-                    
+                case lw:
+                    System.out.println("lw " + code.z + "," + code.imm + "("+ code.x + ")");
+                    break;
+                case add:
+                    System.out.println("add " + code.z + "," + code.x + "," + code.y);
+                    break;
+                case sub:
+                    System.out.println("sub " + code.z + "," + code.x + "," + code.y);
+                    break;
+                case mult:
+                    System.out.println("mult " + code.z + "," + code.x);
+                    break;
+                case div:
+                    System.out.println("div " + code.z + "," + code.x);
+                    break;
+                case mflo:
+                    System.out.println("mflo " + code.z);
+                    break;
+                case mfhi:
+                    System.out.println("mfhi " + code.z);
+                    break;
                 default:
                     break;
             }

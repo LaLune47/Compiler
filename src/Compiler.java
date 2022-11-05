@@ -38,7 +38,7 @@ public class Compiler {
         }
         //ps.close();
     
-//        MipsGenerator mipsGenerator = new MipsGenerator(midCodes,conStrings);
-//        mipsGenerator.printMips();
+        MipsGenerator mipsGenerator = new MipsGenerator(midCodes,conStrings);
+        mipsGenerator.printMips();
     }
 }

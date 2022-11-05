@@ -21,4 +21,24 @@ public class IntegerTable {
     public void addItem(ItemInteger itemInteger) {
         itemIntegers.put(itemInteger.getName(),itemInteger);
     }
+    
+    public boolean contains(String name) {
+        return itemIntegers.containsKey(name);
+    }
+    
+    public ItemInteger getItem(String name) {
+        if (contains(name)) {
+            return itemIntegers.get(name);
+        } else {
+            return null;
+        }
+    }
+    
+    public IntegerTable getParent() {
+        return parent;
+    }
+    
+    public boolean isGlobal() {
+        return isGlobal;
+    }
 }
