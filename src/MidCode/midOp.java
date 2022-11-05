@@ -32,7 +32,7 @@ public enum midOp {
     
     MAIN,   //主函数进入入口
     EXIT,  //退出 main最后
-    LABEL, //标号,区分不同作用域和标号
+    FUNC_BLOCK, //标号,区分不同作用域和标号
     
     GOTO,  //无条件跳转
     Jump,  //跳转标记

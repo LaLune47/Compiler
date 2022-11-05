@@ -64,11 +64,11 @@ public class SymbolTableBuilder {
         if (4 < mainFunc.getChildren().size()) {
             block = mainFunc.getChildren().get(4);
             Integer curNum = blockNum;
-            midCodes.add(new MidCode(midOp.LABEL,curNum.toString(),"start"));
+            midCodes.add(new MidCode(midOp.FUNC_BLOCK,curNum.toString(),"start"));
             blockNum++;
             midCodes.add(new MidCode(midOp.MAIN));
             SymbolTable childTable = parseFuncBlock(block,1,rootTable,null,FuncType.INT);
-            midCodes.add(new MidCode(midOp.LABEL,curNum.toString(),"end"));
+            midCodes.add(new MidCode(midOp.FUNC_BLOCK,curNum.toString(),"end"));
             midCodes.add(new MidCode(midOp.EXIT));
             rootTable.addChild(childTable);
         }
@@ -294,7 +294,7 @@ public class SymbolTableBuilder {
         
         Integer curNum = blockNum;
         blockNum++;
-        midCodes.add(new MidCode(midOp.LABEL,curNum.toString(),"start"));
+        midCodes.add(new MidCode(midOp.FUNC_BLOCK,curNum.toString(),"start"));
         if (children.size() >= 5) {
             Node type = node.getFirstChild().unwrap();
             funcDef.setType(tranType(type));
@@ -317,7 +317,7 @@ public class SymbolTableBuilder {
         table.addChild(subTable);
         funcDef.setSymbolTable(subTable);
         
-        midCodes.add(new MidCode(midOp.LABEL,curNum.toString(),"end"));
+        midCodes.add(new MidCode(midOp.FUNC_BLOCK,curNum.toString(),"end"));
     }
     
     private ArrayList<SingleItem> parseFuncFParams(Node funcFParamsNode) {
@@ -407,10 +407,10 @@ public class SymbolTableBuilder {
         if (typeCheckBranch(stmt.getFirstChild(),NonTerminator.Block)) {
             Node subBlock = stmt.getFirstChild();
             Integer curNum = blockNum;
-            midCodes.add(new MidCode(midOp.LABEL,curNum.toString(),"start"));
+            midCodes.add(new MidCode(midOp.FUNC_BLOCK,curNum.toString(),"start"));
             blockNum++;
             SymbolTable subTable = parseBlock(subBlock,depth + 1,table);
-            midCodes.add(new MidCode(midOp.LABEL,curNum.toString(),"end"));
+            midCodes.add(new MidCode(midOp.FUNC_BLOCK,curNum.toString(),"end"));
             table.addChild(subTable);
         } else if (typeCheckLeaf(stmt.getFirstLeafNode(),TokenTYPE.RETURNTK)) {
             if (stmt.childIterator(1).equals(TokenTYPE.SEMICN)) {  // return ;

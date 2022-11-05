@@ -41,4 +41,8 @@ public class IntegerTable {
     public boolean isGlobal() {
         return isGlobal;
     }
+    
+    public Integer length() {
+        return itemIntegers.size();
+    }
 }

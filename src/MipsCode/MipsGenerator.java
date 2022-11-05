@@ -13,9 +13,12 @@ public class MipsGenerator {
     private ArrayList<FinalCode> finalCodes;
     private static FinalCode space;
     private Integer itemNum;
+    private boolean has_j_main = false;
     private boolean inMain = false;
-    private boolean inFunc = false;
     private IntegerTable curTable = new IntegerTable(null);
+    private ArrayList<MidCode> stackParaR;
+    private String curFunc;
+    private HashMap<String,Integer> funcLength = new HashMap<>();
     
     public MipsGenerator(ArrayList<MidCode> midCodes,HashMap<String,String> conStrings) {
         this.midCodes = midCodes;
@@ -23,7 +26,21 @@ public class MipsGenerator {
         this.finalCodes = new ArrayList<>();
         space = new FinalCode(mipsOp.space);
         itemNum = 0;
+        stackParaR = new ArrayList<>();
+        setMainLength();
         genMips();
+    }
+    
+    private void setMainLength() {
+        int i = 0;
+        for (MidCode midCode:midCodes) {
+            i++;
+            if (midCode.op.equals(midOp.MAIN)) {
+                break;
+            }
+        }
+        Integer length = midCodes.size() - i + 5;  // 防止出意外？多留一点？todo 可能会因为数组出现变化
+        funcLength.put("main",length);
     }
     
     private boolean isImm(String origin) {
@@ -67,7 +84,7 @@ public class MipsGenerator {
             if (isGlobal) {
                 finalCodes.add(new FinalCode(mipsOp.lw, regName, "$gp", "", 4 * offset));
             } else {
-                finalCodes.add(new FinalCode(mipsOp.lw, regName, "$sp", "", -4 * offset));
+                finalCodes.add(new FinalCode(mipsOp.lw, regName, "$sp", "", 4 * offset));
             }
         }
     }
@@ -81,7 +98,7 @@ public class MipsGenerator {
         if (isGlobal) {
             finalCodes.add(new FinalCode(mipsOp.sw, regName, "$gp", "", 4 * offset));
         } else {
-            finalCodes.add(new FinalCode(mipsOp.sw, regName, "$sp", "", -4 * offset));
+            finalCodes.add(new FinalCode(mipsOp.sw, regName, "$sp", "", 4 * offset));
         }
     }
     
@@ -178,6 +195,106 @@ public class MipsGenerator {
                     finalCodes.add(new FinalCode(mipsOp.li,"$v0","","",1));
                     finalCodes.add(new FinalCode(mipsOp.syscall));
                     break;
+                case FUNC_BLOCK:
+                    if (midCode.x.equals("start")) {
+                        curTable = new IntegerTable(curTable);
+                    } else {
+                        curTable = curTable.getParent();
+                        funcLength.put(curFunc,itemNum + 5);  // 防止出意外？多留一点？todo 可能会因为数组出现变化
+                        curFunc = null;
+                        finalCodes.add(new FinalCode(mipsOp.space));
+                    }
+                    break;
+                case FUNC:
+                    if (!has_j_main) {
+                        finalCodes.add(new FinalCode(mipsOp.j,"main"));
+                        finalCodes.add(new FinalCode(mipsOp.space));
+                        has_j_main = true;
+                    }
+                    finalCodes.add(new FinalCode(mipsOp.label,midCode.z));
+                    curFunc = midCode.z;
+                    itemNum = 1; // todo 1留给ra
+                    break;
+                case PARA: // 跟var类似   // todo 数组
+                    define(midCode.z);
+                    break;
+                case RET:
+                    if (inMain) {
+                       finalCodes.add(new FinalCode(mipsOp.li,"$v0","","",10));
+                       finalCodes.add(new FinalCode(mipsOp.syscall));
+                    } else {
+                        if (midCode.z != null) {
+                            loadValue(midCode.z,"$v0");
+                        }
+                        finalCodes.add(new FinalCode(mipsOp.jr,"$ra"));
+                    }
+                    break;
+                case PUSH:
+                    stackParaR.add(midCode);
+                    break;
+                case CALL:
+                    // todo
+//                    Integer len = funcLength.get(midCode.z);
+//                    finalCodes.add(new FinalCode(mipsOp.addi,"$sp","$sp","",-4*len));
+//                    finalCodes.add(new FinalCode(mipsOp.sw, "$ra", "$sp", "", 4));
+//                    for (MidCode paraR:stackParaR) {
+//                        loadValue(paraR.z,"$t0");
+//                        finalCodes.add(new FinalCode(mipsOp.sw,"t0","sp"))
+//                    }
+//
+//
+//                    else if (mc.op.equals(midCode.operation.CALL)) {
+//                    for (int j = 0; j < pushOpstcak.size(); j++) {
+//                        midCode mcs = pushOpstcak.get(j);
+//                        if (mcs.x != null) {
+//                            loadAddress(mcs.z, "$t0");
+//                            loadValue(mcs.x, "$t1", false);
+//                            mipscodes.add(new Mipscode(Mipscode.operation.li, "$t2", "", "", Integer.parseInt(mcs.y) * 4));
+//                            mipscodes.add(new Mipscode(Mipscode.operation.mult, "$t2", "$t1", ""));
+//                            mipscodes.add(new Mipscode(Mipscode.operation.mflo, "$t2"));
+//                            mipscodes.add(new Mipscode(Mipscode.operation.add, "$t0", "$t0", "$t2"));
+//                        }
+//                        else {
+//                            loadAddress(mcs.z, "$t0");
+//                        }
+//                        mipscodes.add(new Mipscode(Mipscode.operation.sw, "$t0", "$sp", "", -4 * j));
+//                    }
+//                    pushOpstcak.clear();
+//                    mipscodes.add(new Mipscode(Mipscode.operation.debug, "----pushOpstcak"));
+//                    mipscodes.add(new Mipscode(Mipscode.operation.addi, "$sp", "$sp", "", -4 * funclength.get(mc.z) - 8));
+//                    mipscodes.add(new Mipscode(Mipscode.operation.sw, "$ra", "$sp", "", 4));
+//                    mipscodes.add(new Mipscode(Mipscode.operation.sw, "$fp", "$sp", "", 8));
+//                    mipscodes.add(new Mipscode(Mipscode.operation.addi, "$fp", "$sp", "", 4 * funclength.get(mc.z) + 8));
+//                    mipscodes.add(new Mipscode(Mipscode.operation.jal, mc.z));
+//                    mipscodes.add(new Mipscode(Mipscode.operation.lw, "$fp", "$sp", "", 8));
+//                    mipscodes.add(new Mipscode(Mipscode.operation.lw, "$ra", "$sp", "", 4));
+//                    mipscodes.add(new Mipscode(Mipscode.operation.addi, "$sp", "$sp", "", 4 * funclength.get(mc.z) + 8));
+//                }
+//
+                    
+                    
+                    
+                    
+                    
+                    
+                    break;
+                case RETVALUE:
+                    storeValue(midCode.z,"$v0",true);
+                    break;
+                    
+                case MAIN:
+                    if (!has_j_main) {
+                        finalCodes.add(new FinalCode(mipsOp.j,"main"));
+                        finalCodes.add(new FinalCode(mipsOp.space));
+                        has_j_main = true;
+                    }
+                    inMain = true;
+                    finalCodes.add(new FinalCode(mipsOp.label,"main"));
+                    itemNum = 0;
+                    Integer len = funcLength.get("main");
+                    finalCodes.add(new FinalCode(mipsOp.addi,"$sp","$sp","",-4*len));
+                    break;
+                case EXIT:
                 default:
                     break;
             }
@@ -235,6 +352,18 @@ public class MipsGenerator {
                     break;
                 case la:
                     System.out.println("la " + code.z + "," + code.x);
+                    break;
+                case j:
+                    System.out.println("j " + code.z);
+                    break;
+                case label:
+                    System.out.println(code.z+":");
+                    break;
+                case jr:
+                    System.out.println("jr " + code.z);
+                    break;
+                case addi:
+                    System.out.println("addi " + code.z + "," + code.x + "," + code.imm);
                     break;
                 default:
                     break;

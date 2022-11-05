@@ -17,4 +17,8 @@ public enum mipsOp {
     mfhi,
     syscall,
     la,
+    j,
+    label,
+    jr,
+    addi
 }
