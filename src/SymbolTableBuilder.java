@@ -18,13 +18,14 @@ import component.TokenTYPE;
 import component.Token;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 // 构造符号表，解决重定义类错误，b
 public class SymbolTableBuilder {
     private Node ast;
     private ArrayList<MyError> errorList;
     private ArrayList<MidCode> midCodes;
-    private ArrayList<String> conStrings;
+    private HashMap<String,String> conStrings;
     private static Integer blockNum = 1;
     private static Integer localNum = 1; // 局部变量编号
     
@@ -32,14 +33,14 @@ public class SymbolTableBuilder {
         this.ast = ast;
         this.errorList = errorList;
         midCodes = new ArrayList<>();
-        conStrings = new ArrayList<>();
+        conStrings = new HashMap<>();
     }
     
     public ArrayList<MidCode> getMidCodes() {
         return midCodes;
     }
     
-    public ArrayList<String> getConStrings() {
+    public HashMap<String, String> getConStrings() {
         return conStrings;
     }
     
@@ -441,7 +442,7 @@ public class SymbolTableBuilder {
             
             StringBuffer buffer = new StringBuffer();
             
-            
+            int strNum = 0;
             int index = 4; // exp 最开始可能出现的地方
             for(int i = 1;i < origin.length()-1;i++) {
                 if (!origin.substring(i,i + 1).equals("%")) {
@@ -450,7 +451,10 @@ public class SymbolTableBuilder {
                     if (buffer.length() != 0) {
                         printCodes.add(new MidCode(midOp.PRINTSTR,buffer.toString()));
                         //midCodes.add(new MidCode(midOp.STRCON,buffer.toString()));
-                        conStrings.add(buffer.toString());
+                        if (!conStrings.containsKey(buffer.toString())) {
+                            conStrings.put(buffer.toString(),"s_"+strNum);
+                            strNum++;
+                        }
                         buffer.setLength(0);
                     }
                     ExpItem exp = AddExp(stmt.childIterator(index).unwrap());

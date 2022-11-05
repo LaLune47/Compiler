@@ -8,6 +8,7 @@ import component.Token;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class Compiler {
@@ -24,7 +25,7 @@ public class Compiler {
         SymbolTable symbolTable = symbolTableBuilder.buildSymbolTable();  // 符号表建立+错误生成补丁+中间代码生成
         // todo 纠葛的顺序，之后好好调整
         ArrayList<MidCode> midCodes = symbolTableBuilder.getMidCodes();
-        ArrayList<String> conStrings = symbolTableBuilder.getConStrings();
+        HashMap<String,String> conStrings = symbolTableBuilder.getConStrings();
         
 //        symbolTable.setBindingNode(ast);
 //        symbolTable.print();

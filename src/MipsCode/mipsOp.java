@@ -15,4 +15,6 @@ public enum mipsOp {
     div,
     mflo,
     mfhi,
+    syscall,
+    la,
 }

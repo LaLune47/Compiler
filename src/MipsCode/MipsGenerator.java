@@ -5,10 +5,11 @@ import MidCode.midOp;
 
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class MipsGenerator {
     private ArrayList<MidCode> midCodes;
-    private ArrayList<String> conStrings;
+    private HashMap<String,String> conStrings;
     private ArrayList<FinalCode> finalCodes;
     private static FinalCode space;
     private Integer itemNum;
@@ -16,7 +17,7 @@ public class MipsGenerator {
     private boolean inFunc = false;
     private IntegerTable curTable = new IntegerTable(null);
     
-    public MipsGenerator(ArrayList<MidCode> midCodes,ArrayList<String> conStrings) {
+    public MipsGenerator(ArrayList<MidCode> midCodes,HashMap<String,String> conStrings) {
         this.midCodes = midCodes;
         this.conStrings = conStrings;
         this.finalCodes = new ArrayList<>();
@@ -97,11 +98,10 @@ public class MipsGenerator {
     private void genMips() {
         // 数据区  字符串常量+ todo 数组
         finalCodes.add(new FinalCode(mipsOp.data));
-        Integer strNum = 0;
-        for (String conString:conStrings) {
-            finalCodes.add(new FinalCode(mipsOp.conString,strNum.toString(),conString));
-            strNum++;
+        for(String str:conStrings.keySet()) {
+            finalCodes.add(new FinalCode(mipsOp.conString,conStrings.get(str),str));
         }
+        
         finalCodes.add(space);
         
         // 全局变量分配 + 函数分配 + main函数
@@ -163,6 +163,21 @@ public class MipsGenerator {
                     finalCodes.add(new FinalCode(mipsOp.debug,"------mod"));
                     storeValue(midCode.z,"$t2",true);
                     break;
+                case SCAN:
+                    finalCodes.add(new FinalCode(mipsOp.li,"$v0","","",5));
+                    finalCodes.add(new FinalCode(mipsOp.syscall));
+                    storeValue(midCode.z,"$v0",true);
+                    break;
+                case PRINTSTR:
+                    finalCodes.add(new FinalCode(mipsOp.la,"$a0",conStrings.get(midCode.z)));
+                    finalCodes.add(new FinalCode(mipsOp.li,"$v0","","",4));
+                    finalCodes.add(new FinalCode(mipsOp.syscall));
+                    break;
+                case PRINTEXP:
+                    loadValue(midCode.z,"$a0");
+                    finalCodes.add(new FinalCode(mipsOp.li,"$v0","","",1));
+                    finalCodes.add(new FinalCode(mipsOp.syscall));
+                    break;
                 default:
                     break;
             }
@@ -186,7 +201,7 @@ public class MipsGenerator {
                     System.out.println(".text");
                     break;
                 case conString:
-                    System.out.println("s_" + code.z +": .asciiz \"" + code.x + "\"");
+                    System.out.println(code.z +": .asciiz \"" + code.x + "\"");
                     break;
                 case li:
                     System.out.println("li " + code.z + "," + code.imm);
@@ -214,6 +229,12 @@ public class MipsGenerator {
                     break;
                 case mfhi:
                     System.out.println("mfhi " + code.z);
+                    break;
+                case syscall:
+                    System.out.println("syscall");
+                    break;
+                case la:
+                    System.out.println("la " + code.z + "," + code.x);
                     break;
                 default:
                     break;
