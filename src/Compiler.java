@@ -7,6 +7,7 @@ import SymbolTable.SymbolTable;
 import component.Token;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,13 +34,17 @@ public class Compiler {
 //        visitor.errorHandling(errorList);            // 废弃：错误处理完成// todo errorList 按照行数排序输出
         
         //PrintStream ps = new PrintStream(Config.outputFilePath);
-        //System.setOut(ps);
-        for (MidCode midCode: midCodes) {
-            System.out.println(midCode.toString());
-        }
+//        //System.setOut(ps);
+//        for (MidCode midCode: midCodes) {
+//            System.out.println(midCode.toString());
+//        }
         //ps.close();
     
+    
+        PrintStream ps = new PrintStream(Config.mipsPath);
+        System.setOut(ps);
         MipsGenerator mipsGenerator = new MipsGenerator(midCodes,conStrings);
         mipsGenerator.printMips();
+        //ps.close();
     }
 }
