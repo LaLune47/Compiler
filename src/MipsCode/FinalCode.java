@@ -5,6 +5,7 @@ public class FinalCode {
     public String z = null;           //结果
     public String x = null;           //左操作符
     public String y = null;           //右操作符
+    public Integer imm;
     
     public FinalCode(mipsOp op, String z, String x, String y) {
         this.op = op;
@@ -24,6 +25,14 @@ public class FinalCode {
         this.z = z;
     }
     
+    public FinalCode(mipsOp op, String z, String x, String y,Integer imm) {
+        this.op = op;
+        this.z = z;
+        this.x = x;
+        this.y = y;
+        this.imm = imm;
+    }
+    
     public FinalCode(mipsOp op) {
         this.op = op;
     }
@@ -40,8 +49,4 @@ public class FinalCode {
         this.y = y;
     }
     
-    @Override
-    public String toString() {
-    
-    }
 }

@@ -11,9 +11,10 @@ public class SingleItem {
     private Dimension dimension;
     private ArraySpace arraySpace;
     private String ident;
-    private Node initValue = null;
-    private ArrayList<Node> initValueArray1 = null;
-    private ArrayList<ArrayList<Node>> initValueArray2 = null;
+    private Integer init;
+//    private Node initValue = null;
+//    private ArrayList<Node> initValueArray1 = null;
+//    private ArrayList<ArrayList<Node>> initValueArray2 = null;  // todo数组的坑
     private boolean isInit;
     private Integer defineLine;
     // 存入初值的和arraySpace的表达式都是addExp
@@ -55,7 +56,7 @@ public class SingleItem {
     public void setDimension(Dimension dimension) {
         this.dimension = dimension;
         if (dimension.equals(Dimension.Array2)) {
-            initValueArray2 = new ArrayList<>();
+            //initValueArray2 = new ArrayList<>();
         }
     }
     
@@ -80,6 +81,18 @@ public class SingleItem {
     
     public String getIdent() {
         return ident;
+    }
+    
+    public void setInit(Integer initValue) {
+        this.init = initValue;
+    }
+    
+    public boolean isConst() {
+        return variability.equals(Variability.CONST);
+    }
+    
+    public Integer getInit() {
+        return init;
     }
     
     // todo 变量和数组多层初始化的问题，需要迁移到SymbolTableBuilder类中

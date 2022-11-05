@@ -1,5 +1,6 @@
 package MidCode;
 
+import SymbolTable.SymbolTable;
 import component.Token;
 import component.TokenTYPE;
 
@@ -60,6 +61,15 @@ public class ExpItem {
             return "t&" + localNum.toString();
         }
     }
+    
+//    public Integer toInteger(SymbolTable table) {
+//        if (this.isNum) {
+//            return Integer.parseInt(this.intConst.getValue());
+//        } else if (this.isIdent && table.isConst(ident.getValue())) {
+//            return table.getValue(ident.getValue());
+//        }
+//        return 0;
+//    }
     
     public MidCode toMidCode() {
         return new MidCode(op,this.getStr(),item1.getStr(),item2.getStr());

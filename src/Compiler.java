@@ -30,8 +30,6 @@ public class Compiler {
 //        symbolTable.print();
 //        Visitor visitor = new Visitor(ast);
 //        visitor.errorHandling(errorList);            // 废弃：错误处理完成// todo errorList 按照行数排序输出
-
-        MipsGenerator mipsGenerator = new MipsGenerator(midCodes,conStrings);
         
         //PrintStream ps = new PrintStream(Config.outputFilePath);
         //System.setOut(ps);
@@ -39,5 +37,8 @@ public class Compiler {
             System.out.println(midCode.toString());
         }
         //ps.close();
+    
+//        MipsGenerator mipsGenerator = new MipsGenerator(midCodes,conStrings);
+//        mipsGenerator.printMips();
     }
 }

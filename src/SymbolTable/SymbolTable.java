@@ -13,7 +13,7 @@ public class SymbolTable {
     private SymbolTable parent;
     private ArrayList<SymbolTable> children;
     private ArrayList<FuncDef> funcs;
-    private ArrayList<SingleItem> items;
+    private HashMap<String,SingleItem> items;
     // todo 顺序有意义，符号表这里应该要改改
     private Node bindingNode;   // block，CompUnit
     private Integer startLine;
@@ -29,7 +29,7 @@ public class SymbolTable {
         }
         this.depth = depth;
         this.children = new ArrayList<>();
-        this.items = new ArrayList<>();
+        this.items = new HashMap<>();
     }
     
     public void setLine(Integer startLine,Integer endLine) {
@@ -50,17 +50,12 @@ public class SymbolTable {
             error.setLine(item.getDefineLine());
             errorList.add(error);
         } else {
-            items.add(item);
+            items.put(item.getIdent(),item);
         }
     }
     
     private boolean hasDefineItem(SingleItem newItem) {
-        for(SingleItem item:items) {
-            if (item.getIdent().equals(newItem.getIdent())) {
-                return true;
-            }
-        }
-        return false;
+        return items.containsKey(newItem.getIdent());
     }
     
     public void addAllItem(ArrayList<SingleItem> items,ArrayList<MyError> errorList) {
@@ -93,6 +88,24 @@ public class SymbolTable {
     
     public void addChild(SymbolTable table) {
         children.add(table);
+    }
+    
+    public boolean isConst(String ident) {
+        if (!items.containsKey(ident)) {
+            return false;
+        } else {
+            SingleItem item = items.get(ident);
+            return item.isConst();
+        }
+    }
+    
+    public Integer getValue(String ident) {
+        if (!items.containsKey(ident)) {
+            return null;
+        } else {
+            SingleItem item = items.get(ident);
+            return item.getInit();
+        }
     }
     
     public void print() {
