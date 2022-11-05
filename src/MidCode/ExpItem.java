@@ -6,7 +6,7 @@ import component.TokenTYPE;
 public class ExpItem {
     private Integer localNum;
     
-    private Operation op;
+    private midOp op;
     private ExpItem item1;
     private ExpItem item2;
     private Boolean isNum;
@@ -18,7 +18,7 @@ public class ExpItem {
     // 取数组值      x:数组ident, y:数组下标
     // 返回t
     
-    public ExpItem(Operation op,ExpItem item1,ExpItem item2,Integer localNum) {
+    public ExpItem(midOp op, ExpItem item1, ExpItem item2, Integer localNum) {
         isIdent = false;
         isNum = false;
         this.item1 = item1;

@@ -1,52 +1,6 @@
 package MidCode;
-/*
-输出结构参考：
-const int a = 1
-var int e = 1
-var int glo_1
-    <LABEL 1 start>
-int test_1( )
-RET  1
-    <LABEL 1 end>
-    <LABEL 2 start>
-void test_2( )
-para int var_6
-RET null
-    <LABEL 2 end>
-    <LABEL 3 start>
-void test_3( )
-RET null
-    <LABEL 3 end>
-    <LABEL 4 start>
-MAIN
-    <LABEL 5 start>
-push e
-call test_2
-call test_1
-retvalue t&1
-    <LABEL 5 end>
-scan glo_1
-    <LABEL 6 start>
-    <LABEL 6 end>
-print "19231076\n"
-RET  0
-    <LABEL 4 end>
------------------EXIT--------------
 
-
-    int a = 1;
-    int b = 2;
-    int c = a+ b;
-    
-    var int a = 1
-    var int b = 2
-    t&1 = a + b
-    var int c = t&1
-    RET  0
-    RET null
- */
-
-public enum Operation {
+public enum midOp {
     PLUSOP, //+
     MINUOP, //-
     MULTOP, //*

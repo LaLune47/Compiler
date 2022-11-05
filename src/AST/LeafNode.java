@@ -1,6 +1,6 @@
 package AST;
 
-import MidCode.Operation;
+import MidCode.midOp;
 import component.Token;
 import component.TokenTYPE;
 
@@ -83,23 +83,23 @@ public class LeafNode implements Node {
         return null;
     }
 
-    public Operation toOp() {
+    public midOp toOp() {
         if (this == null) {
-            return Operation.DEFAULT;
+            return midOp.DEFAULT;
         }
         switch (token.getType()) {
             case PLUS:
-                return Operation.PLUSOP;
+                return midOp.PLUSOP;
             case MINU:
-                return Operation.MINUOP;
+                return midOp.MINUOP;
             case MULT:
-                return Operation.MULTOP;
+                return midOp.MULTOP;
             case DIV:
-                return Operation.DIVOP;
+                return midOp.DIVOP;
             case MOD:
-                return Operation.MODOP;
+                return midOp.MODOP;
             default:
-                return Operation.DEFAULT;
+                return midOp.DEFAULT;
         }
     }
 }

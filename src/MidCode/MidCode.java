@@ -1,30 +1,30 @@
 package MidCode;
 
 public class MidCode {
-    public Operation op;       //操作符
+    public midOp op;       //操作符
     public String z = null;           //结果
     public String x = null;           //左操作符
     public String y = null;           //右操作符
     
-    public MidCode(Operation op,String z,String x,String y) {
+    public MidCode(midOp op, String z, String x, String y) {
         this.op = op;
         this.z = z;
         this.x = x;
         this.y = y;
     }
     
-    public MidCode(Operation op,String z,String x) {
+    public MidCode(midOp op, String z, String x) {
         this.op = op;
         this.z = z;
         this.x = x;
     }
     
-    public MidCode(Operation op,String z) {
+    public MidCode(midOp op, String z) {
         this.op = op;
         this.z = z;
     }
     
-    public MidCode(Operation op) {
+    public MidCode(midOp op) {
         this.op = op;
     }
     
@@ -114,6 +114,6 @@ public class MidCode {
     }
     
     public boolean isRet() {
-        return op.equals(Operation.RET);
+        return op.equals(midOp.RET);
     }
 }

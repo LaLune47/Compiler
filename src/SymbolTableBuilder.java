@@ -3,8 +3,7 @@ import AST.LeafNode;
 import AST.MyError;
 import AST.Node;
 import MidCode.MidCode;
-import MidCode.MidGenerator;
-import MidCode.Operation;
+import MidCode.midOp;
 import MidCode.ExpItem;
 import SymbolTable.SymbolTable;
 import SymbolTable.SingleItem;
@@ -23,20 +22,24 @@ import java.util.ArrayList;
 public class SymbolTableBuilder {
     private Node ast;
     private ArrayList<MyError> errorList;
-    private MidGenerator generator;
     private ArrayList<MidCode> midCodes;
+    private ArrayList<String> conStrings;
     private static Integer blockNum = 1;
     private static Integer localNum = 1; // 局部变量编号
     
     public SymbolTableBuilder(Node ast,ArrayList<MyError> errorList) {
         this.ast = ast;
         this.errorList = errorList;
-        generator = new MidGenerator();
         midCodes = new ArrayList<>();
+        conStrings = new ArrayList<>();
     }
     
     public ArrayList<MidCode> getMidCodes() {
         return midCodes;
+    }
+    
+    public ArrayList<String> getConStrings() {
+        return conStrings;
     }
     
     public SymbolTable buildSymbolTable() {
@@ -59,12 +62,12 @@ public class SymbolTableBuilder {
         if (4 < mainFunc.getChildren().size()) {
             block = mainFunc.getChildren().get(4);
             Integer curNum = blockNum;
-            midCodes.add(new MidCode(Operation.LABEL,curNum.toString(),"start"));
+            midCodes.add(new MidCode(midOp.LABEL,curNum.toString(),"start"));
             blockNum++;
-            midCodes.add(new MidCode(Operation.MAIN));
+            midCodes.add(new MidCode(midOp.MAIN));
             SymbolTable childTable = parseFuncBlock(block,1,rootTable,null,FuncType.INT);
-            midCodes.add(new MidCode(Operation.LABEL,curNum.toString(),"end"));
-            midCodes.add(new MidCode(Operation.EXIT));
+            midCodes.add(new MidCode(midOp.LABEL,curNum.toString(),"end"));
+            midCodes.add(new MidCode(midOp.EXIT));
             rootTable.addChild(childTable);
         }
         return rootTable;
@@ -78,7 +81,7 @@ public class SymbolTableBuilder {
         
         int length = midCodes.size();
         if (!midCodes.get(length - 1).isRet()) {
-            midCodes.add(new MidCode(Operation.RET));  // 标记函数结束的,多出来一句
+            midCodes.add(new MidCode(midOp.RET));  // 标记函数结束的,多出来一句
         }
         return symbolTable;
     }
@@ -214,7 +217,7 @@ public class SymbolTableBuilder {
         if (children.size() == 1 || (children.size() >= 2 && !typeCheckLeaf(children.get(1),TokenTYPE.LBRACK))) {
             item.setDimension(Dimension.Single);
             item.setArraySpace(new ArraySpace());
-            midCode = new MidCode(Operation.VAR,item.getIdent());
+            midCode = new MidCode(midOp.VAR,item.getIdent());
             if (children.size() == 3) {
                 midCode.setX(setInitValue(children.get(2)).getStr());
             }
@@ -247,7 +250,7 @@ public class SymbolTableBuilder {
             item.setDimension(Dimension.Single);
             item.setArraySpace(new ArraySpace());
             item.setIdent(((LeafNode)children.get(0)).getValue());
-            midCode = new MidCode(Operation.CONST,item.getIdent());
+            midCode = new MidCode(midOp.CONST,item.getIdent());
             index = 2;
             if (children.size() == 3) {
                 midCode.setX(setInitValue(children.get(index)).getStr());
@@ -287,13 +290,13 @@ public class SymbolTableBuilder {
         
         Integer curNum = blockNum;
         blockNum++;
-        midCodes.add(new MidCode(Operation.LABEL,curNum.toString(),"start"));
+        midCodes.add(new MidCode(midOp.LABEL,curNum.toString(),"start"));
         if (children.size() >= 5) {
             Node type = node.getFirstChild().unwrap();
             funcDef.setType(tranType(type));
             LeafNode ident = (LeafNode) children.get(1);
             funcDef.setIdent(ident.getValue());
-            MidCode code = new MidCode(Operation.FUNC,ident.getValue(),node.getFirstLeafNode().getValue());
+            MidCode code = new MidCode(midOp.FUNC,ident.getValue(),node.getFirstLeafNode().getValue());
             midCodes.add(code);
         }
         
@@ -310,7 +313,7 @@ public class SymbolTableBuilder {
         table.addChild(subTable);
         funcDef.setSymbolTable(subTable);
         
-        midCodes.add(new MidCode(Operation.LABEL,curNum.toString(),"end"));
+        midCodes.add(new MidCode(midOp.LABEL,curNum.toString(),"end"));
     }
     
     private ArrayList<SingleItem> parseFuncFParams(Node funcFParamsNode) {
@@ -333,7 +336,7 @@ public class SymbolTableBuilder {
         SingleItem item = new SingleItem(Variability.PARA);
         item.setDefineLine(funcFParamNode.getLine());
         
-        MidCode midCode = new MidCode(Operation.PARA);
+        MidCode midCode = new MidCode(midOp.PARA);
         if (children.size() >= 2) {
             LeafNode ident = (LeafNode)children.get(1);
             item.setIdent(ident.getValue());
@@ -397,17 +400,17 @@ public class SymbolTableBuilder {
         if (typeCheckBranch(stmt.getFirstChild(),NonTerminator.Block)) {
             Node subBlock = stmt.getFirstChild();
             Integer curNum = blockNum;
-            midCodes.add(new MidCode(Operation.LABEL,curNum.toString(),"start"));
+            midCodes.add(new MidCode(midOp.LABEL,curNum.toString(),"start"));
             blockNum++;
             SymbolTable subTable = parseBlock(subBlock,depth + 1,table);
-            midCodes.add(new MidCode(Operation.LABEL,curNum.toString(),"end"));
+            midCodes.add(new MidCode(midOp.LABEL,curNum.toString(),"end"));
             table.addChild(subTable);
         } else if (typeCheckLeaf(stmt.getFirstLeafNode(),TokenTYPE.RETURNTK)) {
             if (stmt.childIterator(1).equals(TokenTYPE.SEMICN)) {  // return ;
                 // 什么都不用做，外层做了
             } else {
                 ExpItem z = AddExp(stmt.childIterator(1).unwrap());
-                midCodes.add(new MidCode(Operation.RET,z.getStr()));
+                midCodes.add(new MidCode(midOp.RET,z.getStr()));
             }
         } else if (typeCheckBranch(stmt.getFirstChild(),NonTerminator.Exp)) {
             AddExp(stmt.childIterator(0).unwrap());
@@ -418,13 +421,13 @@ public class SymbolTableBuilder {
             } else {
                 xItem = new ExpItem("scan",localNum);
                 localNum++;
-                midCodes.add(new MidCode(Operation.SCAN,xItem.getStr()));
+                midCodes.add(new MidCode(midOp.SCAN,xItem.getStr()));
             }
             // LVal  Ident {'[' Exp ']'}
             Node lVal = stmt.getFirstChild();
             ExpItem z = new ExpItem(lVal.getFirstLeafNode().getToken());   // todo 数组再改
     
-            midCodes.add(new MidCode(Operation.ASSIGNOP,z.getStr(),xItem.getStr()));
+            midCodes.add(new MidCode(midOp.ASSIGNOP,z.getStr(),xItem.getStr()));
         } else if (typeCheckLeaf(stmt.getFirstLeafNode(),TokenTYPE.PRINTFTK)) {
             // 'printf''('FormatString{,Exp}')'';' // i j l
             String origin = stmt.childIterator(2).getFirstLeafNode().getValue();  //自带引号
@@ -439,12 +442,13 @@ public class SymbolTableBuilder {
                     buffer.append(origin.substring(i,i + 1));
                 } else {
                     if (buffer.length() != 0) {
-                        printCodes.add(new MidCode(Operation.PRINTSTR,buffer.toString()));
-                        midCodes.add(new MidCode(Operation.STRCON,buffer.toString()));
+                        printCodes.add(new MidCode(midOp.PRINTSTR,buffer.toString()));
+                        //midCodes.add(new MidCode(midOp.STRCON,buffer.toString()));
+                        conStrings.add(buffer.toString());
                         buffer.setLength(0);
                     }
                     ExpItem exp = AddExp(stmt.childIterator(index).unwrap());
-                    printCodes.add(new MidCode(Operation.PRINTEXP,exp.getStr()));
+                    printCodes.add(new MidCode(midOp.PRINTEXP,exp.getStr()));
                     
                     buffer.setLength(0);
                     i++;
@@ -452,8 +456,8 @@ public class SymbolTableBuilder {
                 }
             }
             if (buffer.length() != 0) {
-                printCodes.add(new MidCode(Operation.PRINTSTR,buffer.toString()));
-                midCodes.add(new MidCode(Operation.STRCON,buffer.toString()));
+                printCodes.add(new MidCode(midOp.PRINTSTR,buffer.toString()));
+                midCodes.add(new MidCode(midOp.STRCON,buffer.toString()));
             }
             midCodes.addAll(printCodes);
         }
@@ -467,7 +471,7 @@ public class SymbolTableBuilder {
         } else {
             ExpItem x = AddExp(addNode.childIterator(i));
             i++;
-            Operation op = addNode.childIterator(i).getFirstLeafNode().toOp();
+            midOp op = addNode.childIterator(i).getFirstLeafNode().toOp();
             i++;
             ExpItem y = MulExp(addNode.childIterator(i));
             
@@ -485,7 +489,7 @@ public class SymbolTableBuilder {
         } else {
             ExpItem x = MulExp(mulNode.childIterator(i));
             i++;
-            Operation op = mulNode.childIterator(i).getFirstLeafNode().toOp();
+            midOp op = mulNode.childIterator(i).getFirstLeafNode().toOp();
             i++;
             ExpItem y = UnaryExp(mulNode.childIterator(i));
             
@@ -515,7 +519,7 @@ public class SymbolTableBuilder {
         } else if (typeCheckBranch(unaryNode.childIterator(0),NonTerminator.UnaryOp)) { // UnaryOp UnaryExp
             //UnaryOp,  '+' | '−' | '!' '!'仅出现在条件表达式中  todo !补充实现，因为暂时没有条件表达式
             ExpItem x = new ExpItem("intConst",0);
-            Operation op = unaryNode.childIterator(0).getFirstLeafNode().toOp();
+            midOp op = unaryNode.childIterator(0).getFirstLeafNode().toOp();
             ExpItem y = UnaryExp(unaryNode.childIterator(1));
             ExpItem z = new ExpItem(op,x,y,localNum);
             localNum++;
@@ -529,13 +533,13 @@ public class SymbolTableBuilder {
             int i = 0;
             while (i < funcRParams.getChildren().size()) {
                 ExpItem paraReal = AddExp(funcRParams.childIterator(i).unwrap());
-                midCodes.add(new MidCode(Operation.PUSH,paraReal.getStr()));
+                midCodes.add(new MidCode(midOp.PUSH,paraReal.getStr()));
                 i += 2;
             }
-            midCodes.add(new MidCode(Operation.CALL,unaryNode.getFirstLeafNode().getValue()));
+            midCodes.add(new MidCode(midOp.CALL,unaryNode.getFirstLeafNode().getValue()));
             ExpItem retValue = new ExpItem("retValue",localNum);
             localNum++;
-            midCodes.add(new MidCode(Operation.RETVALUE,retValue.getStr()));
+            midCodes.add(new MidCode(midOp.RETVALUE,retValue.getStr()));
             
             return retValue;
         }
