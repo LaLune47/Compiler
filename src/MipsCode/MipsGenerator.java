@@ -216,7 +216,7 @@ public class MipsGenerator {
                     }
                     finalCodes.add(new FinalCode(mipsOp.label,midCode.z));
                     curFunc = midCode.z;
-                    itemNum = 1; // todo 1留给ra
+                    itemNum = 0;
                     break;
                 case PARA: // 跟var类似   // todo 数组
                     define(midCode.z);
@@ -239,7 +239,7 @@ public class MipsGenerator {
                     // 传入形参
                     int i = 0;
                     for (MidCode paraR:paraRs) {
-                        loadValue(paraR.x,"$t0");
+                        loadValue(paraR.z,"$t0");
                         finalCodes.add(new FinalCode(mipsOp.sw, "$t0", "$sp", "", -4 * i));
                         i++;
                     }

@@ -28,6 +28,7 @@ public class SymbolTableBuilder {
     private HashMap<String,String> conStrings;
     private static Integer blockNum = 1;
     private static Integer localNum = 1; // 局部变量编号
+    private static Integer strNum = 0;
     
     public SymbolTableBuilder(Node ast,ArrayList<MyError> errorList) {
         this.ast = ast;
@@ -442,7 +443,6 @@ public class SymbolTableBuilder {
             
             StringBuffer buffer = new StringBuffer();
             
-            int strNum = 0;
             int index = 4; // exp 最开始可能出现的地方
             for(int i = 1;i < origin.length()-1;i++) {
                 if (!origin.substring(i,i + 1).equals("%")) {
