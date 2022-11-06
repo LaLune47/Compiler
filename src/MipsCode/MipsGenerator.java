@@ -16,7 +16,7 @@ public class MipsGenerator {
     private boolean has_j_main = false;
     private boolean inMain = false;
     private IntegerTable curTable = new IntegerTable(null);
-    private ArrayList<MidCode> stackParaR;
+    private ArrayList<MidCode> paraRs;
     private String curFunc;
     private HashMap<String,Integer> funcLength = new HashMap<>();
     
@@ -26,7 +26,7 @@ public class MipsGenerator {
         this.finalCodes = new ArrayList<>();
         space = new FinalCode(mipsOp.space);
         itemNum = 0;
-        stackParaR = new ArrayList<>();
+        paraRs = new ArrayList<>();
         setMainLength();
         genMips();
     }
@@ -44,6 +44,9 @@ public class MipsGenerator {
     }
     
     private boolean isImm(String origin) {
+        if (origin == null) {
+            return false;
+        }
         char c = origin.charAt(0);
         return c <= '9' && c >= '0' || c == '-';
     }
@@ -84,7 +87,7 @@ public class MipsGenerator {
             if (isGlobal) {
                 finalCodes.add(new FinalCode(mipsOp.lw, regName, "$gp", "", 4 * offset));
             } else {
-                finalCodes.add(new FinalCode(mipsOp.lw, regName, "$sp", "", 4 * offset));
+                finalCodes.add(new FinalCode(mipsOp.lw, regName, "$fp", "", -4 * offset));
             }
         }
     }
@@ -98,7 +101,7 @@ public class MipsGenerator {
         if (isGlobal) {
             finalCodes.add(new FinalCode(mipsOp.sw, regName, "$gp", "", 4 * offset));
         } else {
-            finalCodes.add(new FinalCode(mipsOp.sw, regName, "$sp", "", 4 * offset));
+            finalCodes.add(new FinalCode(mipsOp.sw, regName, "$fp", "", -4 * offset));
         }
     }
     
@@ -230,10 +233,33 @@ public class MipsGenerator {
                     }
                     break;
                 case PUSH:
-                    stackParaR.add(midCode);
+                    paraRs.add(midCode);
                     break;
                 case CALL:
-                    // todo
+                    // 传入形参
+                    int i = 0;
+                    for (MidCode paraR:paraRs) {
+                        loadValue(paraR.x,"$t0");
+                        finalCodes.add(new FinalCode(mipsOp.sw, "$t0", "$sp", "", -4 * i));
+                        i++;
+                    }
+                    paraRs.clear();
+                    
+                    int len = 0;
+                    if (funcLength.containsKey(midCode.z)) {
+                        len = funcLength.get(midCode.z);
+                    }
+                    finalCodes.add(new FinalCode(mipsOp.addi, "$sp", "$sp", "",-4 * len));
+                    finalCodes.add(new FinalCode(mipsOp.sw, "$fp", "$sp", "",4)); // 从0开始的话担心纠缠不清
+                    finalCodes.add(new FinalCode(mipsOp.sw, "$ra", "$sp", "",8));
+                    finalCodes.add(new FinalCode(mipsOp.addi, "$fp", "$sp", "",4 * len));
+                        // fp到原始sp的位置，上一个运行栈的末尾此处运行栈的开始，与形参也可以衔接上
+                    finalCodes.add(new FinalCode(mipsOp.jal,midCode.z));
+                    finalCodes.add(new FinalCode(mipsOp.nop));
+                    finalCodes.add(new FinalCode(mipsOp.lw, "$fp", "$sp", "",4));
+                    finalCodes.add(new FinalCode(mipsOp.lw, "$ra", "$sp", "",8));
+                    finalCodes.add(new FinalCode(mipsOp.addi, "$sp", "$sp", "",4 * len));
+                    
                     break;
                 case RETVALUE:
                     storeValue(midCode.z,"$v0",true);
@@ -248,8 +274,9 @@ public class MipsGenerator {
                     inMain = true;
                     finalCodes.add(new FinalCode(mipsOp.label,"main"));
                     itemNum = 0;
-                    Integer len = funcLength.get("main");
-                    finalCodes.add(new FinalCode(mipsOp.addi,"$sp","$sp","",-4*len));
+                    Integer lenMain = funcLength.get("main");
+                    finalCodes.add(new FinalCode(mipsOp.move,"$fp", "$sp"));
+                    finalCodes.add(new FinalCode(mipsOp.addi,"$sp","$sp","",-4*lenMain));
                     break;
                 case EXIT:
                 default:
@@ -263,7 +290,7 @@ public class MipsGenerator {
         for (FinalCode code:finalCodes) {
             switch (code.op) {
                 case debug:
-                    System.out.println(code.z);
+                    //System.out.println(code.z);
                     break;
                 case space:
                     System.out.println();
@@ -321,6 +348,15 @@ public class MipsGenerator {
                     break;
                 case addi:
                     System.out.println("addi " + code.z + "," + code.x + "," + code.imm);
+                    break;
+                case move:
+                    System.out.println("move " + code.z + "," + code.x);
+                    break;
+                case jal:
+                    System.out.println("jal " + code.z);
+                    break;
+                case nop:
+                    System.out.println("nop");
                     break;
                 default:
                     break;

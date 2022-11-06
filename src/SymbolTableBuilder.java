@@ -467,7 +467,11 @@ public class SymbolTableBuilder {
             }
             if (buffer.length() != 0) {
                 printCodes.add(new MidCode(midOp.PRINTSTR,buffer.toString()));
-                midCodes.add(new MidCode(midOp.STRCON,buffer.toString()));
+                //midCodes.add(new MidCode(midOp.STRCON,buffer.toString()));
+                if (!conStrings.containsKey(buffer.toString())) {
+                    conStrings.put(buffer.toString(),"s_"+strNum);
+                    strNum++;
+                }
             }
             midCodes.addAll(printCodes);
         }

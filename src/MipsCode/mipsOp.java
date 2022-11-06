@@ -20,5 +20,8 @@ public enum mipsOp {
     j,
     label,
     jr,
-    addi
+    addi,
+    move,
+    jal,
+    nop,
 }

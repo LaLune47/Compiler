@@ -45,6 +45,6 @@ public class Compiler {
         System.setOut(ps);
         MipsGenerator mipsGenerator = new MipsGenerator(midCodes,conStrings);
         mipsGenerator.printMips();
-        //ps.close();
+        ps.close();
     }
 }
