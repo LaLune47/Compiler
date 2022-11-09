@@ -12,17 +12,13 @@ public class SymbolTable {
     private Integer depth;
     private SymbolTable parent;
     private ArrayList<SymbolTable> children;
-    private ArrayList<FuncDef> funcs;
+    private HashMap<String,FuncDef> funcs;
     private HashMap<String,SingleItem> items;
-    // todo 顺序有意义，符号表这里应该要改改
-    private Node bindingNode;   // block，CompUnit
-    private Integer startLine;
-    private Integer endLine;
     
     public SymbolTable(Integer depth,SymbolTable parent) {
         if (depth == 0) {
             this.parent = null;
-            this.funcs = new ArrayList<>();
+            this.funcs = new HashMap<>();
         } else {
             this.parent = parent;
             this.funcs = null;
@@ -32,16 +28,10 @@ public class SymbolTable {
         this.items = new HashMap<>();
     }
     
-    public void setLine(Integer startLine,Integer endLine) {
-        this.startLine = startLine;
-        this.endLine = endLine;
-    }
-    
-    public void setBindingNode(Node bindingNode) {  // 双向绑定
-        this.bindingNode = bindingNode;
-        if (bindingNode instanceof BranchNode) {
-            ((BranchNode) bindingNode).setSymbolTable(this);
-        }
+    public SymbolTable initFuncTable(Integer depth,SymbolTable parent,ArrayList<SingleItem> items,ArrayList<MyError> errorList) {
+        SymbolTable symbolTable = new SymbolTable(depth,parent);
+        symbolTable.addAllItem(items,errorList);
+        return symbolTable;
     }
     
     public void addItem(SingleItem item, ArrayList<MyError> errorList) {
@@ -73,32 +63,27 @@ public class SymbolTable {
             error.setLine(func.getDefineLine());
             errorList.add(error);
         } else {
-            funcs.add(func);
+            funcs.put(func.getIdent(),func);
         }
     }
     
     private boolean hasDefineFunc(FuncDef newFunc) {
-        for(FuncDef func:funcs) {
-            if (func.getIdent().equals(newFunc.getIdent())) {
-                return true;
-            }
-        }
-        return false;
+        return funcs.containsKey(newFunc.getIdent());
     }
     
     public void addChild(SymbolTable table) {
         children.add(table);
     }
     
-    public boolean isConst(String ident) {
-        if (!items.containsKey(ident)) {
-            return false;
-        } else {
-            SingleItem item = items.get(ident);
-            return item.isConst();
-        }
-    }
-    
+//    public boolean isConst(String ident) {
+//        if (!items.containsKey(ident)) {
+//            return false;
+//        } else {
+//            SingleItem item = items.get(ident);
+//            return item.isConst();
+//        }
+//    }
+//
     public Integer getValue(String ident) {
         if (items.containsKey(ident)) {
             SingleItem item = items.get(ident);

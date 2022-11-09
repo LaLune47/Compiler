@@ -7,39 +7,54 @@ import component.TokenTYPE;
 import java.util.ArrayList;
 
 public class SingleItem {
-    private Variability variability;
-    private Dimension dimension;
-    private ArraySpace arraySpace;
+    private Boolean isConst;
+    private Integer dimension;
     private String ident;
-    private Integer init;
+    private Integer defineLine;
+    private Integer initValue;  // todo const初值，有一定作用
+    //private Integer init;  todo 符号表里面不需要存值啊！直接在中间代码就输出了
+    //private boolean isInit;
 //    private Node initValue = null;
 //    private ArrayList<Node> initValueArray1 = null;
 //    private ArrayList<ArrayList<Node>> initValueArray2 = null;  // todo数组的坑
-    private boolean isInit;
-    private Integer defineLine;
     // 存入初值的和arraySpace的表达式都是addExp
     
-    public SingleItem(Variability variability,Dimension dimension,ArraySpace arraySpace,String ident) {
-        this.variability = variability;
+    public SingleItem(Boolean isConst,Integer dimension,String ident) {
+        this.isConst = isConst;
         this.dimension = dimension;
-        this.arraySpace = arraySpace;
-        this.ident = ident;
-        this.isInit = false;
-    }
-    
-    public SingleItem(Variability variability) {
-        this.variability = variability;
-        this.dimension = null;
-        this.arraySpace =  null;
-        this.ident =  null;
-    }
-    
-    public SingleItem(Variability variability,String ident) {
-        this.variability = variability;
-        this.dimension = null;
-        this.arraySpace =  null;
         this.ident = ident;
     }
+    
+    public SingleItem(Boolean isConst,Integer dimension) {
+        this.isConst = isConst;
+        this.dimension = dimension;
+    }
+    
+    public SingleItem(Boolean isConst) {
+        this.isConst = isConst;
+    }
+    
+//    public SingleItem(Variability variability,Dimension dimension,ArraySpace arraySpace,String ident) {
+//        this.variability = variability;
+//        this.dimension = dimension;
+//        this.arraySpace = arraySpace;
+//        this.ident = ident;
+//        this.isInit = false;
+//    }
+//
+//    public SingleItem(Variability variability) {
+//        this.variability = variability;
+//        this.dimension = null;
+//        this.arraySpace =  null;
+//        this.ident =  null;
+//    }
+//
+//    public SingleItem(Variability variability,String ident) {
+//        this.variability = variability;
+//        this.dimension = null;
+//        this.arraySpace =  null;
+//        this.ident = ident;
+//    }
     
     public void setDefineLine(Integer defineLine) {
         this.defineLine = defineLine;
@@ -49,15 +64,11 @@ public class SingleItem {
         return defineLine;
     }
     
-    public void setArraySpace(ArraySpace arraySpace) {
-        this.arraySpace = arraySpace;
-    }
-    
-    public void setDimension(Dimension dimension) {
+    public void setDimension(Integer dimension) {
         this.dimension = dimension;
-        if (dimension.equals(Dimension.Array2)) {
-            //initValueArray2 = new ArrayList<>();
-        }
+//        if (dimension.equals(Dimension.Array2)) {
+//            //initValueArray2 = new ArrayList<>();
+//        }
     }
     
     private boolean typeCheckLeaf(Node node, TokenTYPE type) {
@@ -67,13 +78,13 @@ public class SingleItem {
         return false;
     }
     
-    private Node unwrap(Node node) { // 去掉一层
-        Node tempNode = node;
-        if (!node.getChildren().isEmpty()) {
-            tempNode = node.getChildren().get(0);  // addExp;
-        }
-        return tempNode;
-    }
+//    private Node unwrap(Node node) { // 去掉一层
+//        Node tempNode = node;
+//        if (!node.getChildren().isEmpty()) {
+//            tempNode = node.getChildren().get(0);  // addExp;
+//        }
+//        return tempNode;
+//    }
     
     public void setIdent(String ident) {
         this.ident = ident;
@@ -83,16 +94,16 @@ public class SingleItem {
         return ident;
     }
     
-    public void setInit(Integer initValue) {
-        this.init = initValue;
+    public Boolean judgeConst() {
+        return isConst;
     }
     
-    public boolean isConst() {
-        return variability.equals(Variability.CONST);
+    public void setInit(Integer initValue) {
+        this.initValue = initValue;
     }
     
     public Integer getInit() {
-        return init;
+        return initValue;
     }
     
     // todo 变量和数组多层初始化的问题，需要迁移到SymbolTableBuilder类中

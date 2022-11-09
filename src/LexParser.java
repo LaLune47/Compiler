@@ -18,7 +18,6 @@ public class LexParser {
     }
     
     public List<Token> parse() {
-        //todo 两层循环寻找\n效率太低，考虑reader部分给予标记
         while (true) {
             reader.resetBuffer();
             TokenTYPE tokenTYPE = null;

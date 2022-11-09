@@ -9,8 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 // 语法分析 + 部分错误处理
-// - i，j，k，括号分号补全，记录错误【ijk】
+//- i，j，k，括号分号补全，记录错误【ijk】
 //- 处理printf和字符串的报错，记录错误【a,l】
+//- m 循环块 报错
 public class AstBuilder {
     private final List<Token> tokenList;
     private Integer index;
@@ -244,10 +245,6 @@ public class AstBuilder {
         }
         
         if (!curEqualTo(TokenTYPE.SEMICN)) {  // 缺少;
-//            Error error = new Error(ErrorTYPE.MissSEMICN_i);
-//            error.setLine(prevTokenLine());
-//            Token token = new Token(prevTokenLine(),TokenTYPE.SEMICN,";");
-//            addErrorLeafChild(currentNode,new LeafNode(token));
             errorSEMICN(currentNode);
         } else {
             addLeafChild(currentNode);  // ';'

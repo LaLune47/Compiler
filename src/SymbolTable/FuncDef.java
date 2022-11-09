@@ -6,26 +6,26 @@ import component.NonTerminator;
 import java.util.ArrayList;
 
 public class FuncDef {
-    private FuncType type;
+    private Boolean isInt;
     private ArrayList<SingleItem> parameters;
     private String ident;
     private SymbolTable symbolTable;
     private Integer defineLine;
     
-    public FuncDef(FuncType type,ArrayList<SingleItem> parameters,String ident) {
-        this.type = type;
+    public FuncDef(Boolean isInt,ArrayList<SingleItem> parameters,String ident) {
+        this.isInt = isInt;
         this.parameters = parameters;
         this.ident = ident;
     }
     
     public FuncDef() {
-        this.type = null;
+        this.isInt = null;
         this.parameters = new ArrayList<>();
         this.ident = null;
     }
     
-    public void setType(FuncType type) {
-        this.type = type;
+    public void setInt(Boolean anInt) {
+        isInt = anInt;
     }
     
     public void setIdent(String ident) {
@@ -52,7 +52,7 @@ public class FuncDef {
         return defineLine;
     }
     
-    public FuncType getType() {
-        return type;
+    public Boolean judgeInt() {
+        return isInt;
     }
 }
