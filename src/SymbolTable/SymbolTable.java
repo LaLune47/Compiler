@@ -77,19 +77,14 @@ public class SymbolTable {
         return funcs.containsKey(newFunc.getIdent());
     }
     
+    public HashMap<String, FuncDef> getFuncs() {
+        return funcs;
+    }
+    
     public void addChild(SymbolTable table) {
         children.add(table);
     }
-    
-//    public boolean isConst(String ident) {
-//        if (!items.containsKey(ident)) {
-//            return false;
-//        } else {
-//            SingleItem item = items.get(ident);
-//            return item.isConst();
-//        }
-//    }
-//
+
     public Integer getValue(String ident) {
         if (items.containsKey(ident)) {
             SingleItem item = items.get(ident);
@@ -101,6 +96,44 @@ public class SymbolTable {
         } else {
             return this.parent.getValue(ident);
         }
+    }
+    
+    public SingleItem findItem(String ident) {
+        if (items.containsKey(ident)) {
+            return items.get(ident);
+        }
+        if (this.parent == null) {
+            return null;
+        } else {
+            return this.parent.findItem(ident);
+        }
+    }
+    
+    public SymbolTable findRootTable() {
+        SymbolTable table = this;
+        while (table.getDepth() != 0) {
+            table = table.getParent();
+        }
+        return table;
+    }
+    
+    public FuncDef findFunc(String ident) {
+        SymbolTable rootTable = this.findRootTable();
+        HashMap<String,FuncDef> funcDefHashMap = rootTable.getFuncs();
+        
+        if (funcDefHashMap.containsKey(ident)) {
+            return funcDefHashMap.get(ident);
+        } else {
+            return null;
+        }
+    }
+    
+    public Integer getDepth() {
+        return depth;
+    }
+    
+    public SymbolTable getParent() {
+        return parent;
     }
     
     public void print() {

@@ -18,8 +18,10 @@ import java.util.HashMap;
 
 // 部分错误处理+中间代码生成
 // -b 同作用域重定义问题
+// -c 未定义问题
 // -g 有返回值的函数缺少return语句
 // -f 无返回值的函数存在不匹配的return语句
+// -h 不能改变常量的值
 public class SymbolTableBuilder {
     private Node ast;
     private ArrayList<MyError> errorList;
@@ -29,6 +31,7 @@ public class SymbolTableBuilder {
     private static Integer blockNum = 1;
     private static Integer localNum = 1; // 局部变量编号
     private static Integer strNum = 0;
+    private SymbolTable calculatingTable = null; // 从addExp、Cond、CalExp下去
     
     public SymbolTableBuilder(Node ast,ArrayList<MyError> errorList) {
         this.ast = ast;
@@ -188,7 +191,10 @@ public class SymbolTableBuilder {
             item.setDimension(0);
             midCode = new MidCode(midOp.VAR,item.getIdent());
             if (children.size() == 3) {
-                midCode.setX(setInitValue(children.get(2)).getStr());
+                Node addExp = children.get(2).unwrap().unwrap();
+                calculatingTable = table;
+                midCode.setX(AddExp(addExp).getStr());
+                calculatingTable = null;
             }
         }
 //        else if (4 <= children.size() && typeCheckLeaf(children.get(1),TokenTYPE.LBRACK)) {
@@ -240,16 +246,6 @@ public class SymbolTableBuilder {
 //        }
         table.addItem(item,errorList);
         midCodes.add(midCode);
-    }
-    
-    private ExpItem setInitValue(Node node) {
-        //ConstInitVal, // 常量初值   ConstExp | '{' [ ConstInitVal { ',' ConstInitVal } ] '}'
-        // InitVal,      // 变量初值   Exp | '{' [ InitVal { ',' InitVal } ] '}
-        // node 为 InitVal 或者 ConstInitVal
-        // todo 数组初始化的很多东西，惊喜的是parseInitVal应该已经把多层初始化搞完了，见SingleItem类
-        
-        Node addExp = node.unwrap().unwrap();
-        return AddExp(addExp);
     }
     
     private void parseFuncDef(Node node,SymbolTable table) {
@@ -373,7 +369,9 @@ public class SymbolTableBuilder {
             if (stmt.childIterator(1).equals(TokenTYPE.SEMICN)) {  // return ;
                 // 什么都不用做，外层做了
             } else {
+                calculatingTable = table;
                 ExpItem z = AddExp(stmt.childIterator(1).unwrap());
+                calculatingTable = null;
                 midCodes.add(new MidCode(midOp.RET,z.getStr()));
                 if (inVoidTypeFunc) {
                     MyError error = new MyError(ErrorTYPE.UnmatchReturn_f);
@@ -382,11 +380,20 @@ public class SymbolTableBuilder {
                 }
             }
         } else if (typeCheckBranch(stmt.getFirstChild(),NonTerminator.Exp)) {
+            calculatingTable = table;
             AddExp(stmt.childIterator(0).unwrap());
-        } else if (typeCheckBranch(stmt.getFirstChild(),NonTerminator.LVal)) {
+            calculatingTable = null;
+        }
+        else if (typeCheckBranch(stmt.getFirstChild(),NonTerminator.LVal)) {
+            LeafNode ident = stmt.getFirstLeafNode();
+            undefineError(ident.getToken(),table,false);
+            changeConstError(ident.getToken(),table);
+            
             ExpItem xItem;
             if (typeCheckBranch(stmt.childIterator(2),NonTerminator.Exp)) {
+                calculatingTable = table;
                 xItem = AddExp(stmt.childIterator(2).unwrap());
+                calculatingTable = null;
             } else {
                 xItem = new ExpItem("scan",localNum);
                 localNum++;
@@ -397,7 +404,8 @@ public class SymbolTableBuilder {
             ExpItem z = new ExpItem(lVal.getFirstLeafNode().getToken());   // todo 数组再改
     
             midCodes.add(new MidCode(midOp.ASSIGNOP,z.getStr(),xItem.getStr()));
-        } else if (typeCheckLeaf(stmt.getFirstLeafNode(),TokenTYPE.PRINTFTK)) {
+        }
+        else if (typeCheckLeaf(stmt.getFirstLeafNode(),TokenTYPE.PRINTFTK)) {
             // 'printf''('FormatString{,Exp}')'';' // i j l
             String origin = stmt.childIterator(2).getFirstLeafNode().getValue();  //自带引号
             ArrayList<MidCode> printCodes = new ArrayList<>();
@@ -418,7 +426,9 @@ public class SymbolTableBuilder {
                         }
                         buffer.setLength(0);
                     }
+                    calculatingTable = table;
                     ExpItem exp = AddExp(stmt.childIterator(index).unwrap());
+                    calculatingTable = null;
                     printCodes.add(new MidCode(midOp.PRINTEXP,exp.getStr()));
                     
                     buffer.setLength(0);
@@ -435,6 +445,25 @@ public class SymbolTableBuilder {
                 }
             }
             midCodes.addAll(printCodes);
+        }
+    }
+    
+    private void undefineError(Token token,SymbolTable table,Boolean isFunc) {
+        String ident = token.getValue();
+        if (!isFunc && table.findItem(ident) == null || isFunc && table.findFunc(ident) == null) {
+            MyError error = new MyError(ErrorTYPE.Undefine_c);
+            error.setLine(token.getLine());
+            errorList.add(error);
+        }
+    }
+    
+    private void changeConstError(Token token,SymbolTable table) {
+        String ident = token.getValue();
+        SingleItem item = table.findItem(ident);
+        if (item != null && item.getIsConst()) {
+            MyError error = new MyError(ErrorTYPE.ChangeConst_h);
+            error.setLine(token.getLine());
+            errorList.add(error);
         }
     }
     
@@ -489,6 +518,10 @@ public class SymbolTableBuilder {
                 // LVal → Ident {'[' Exp ']'}  todo 数组实现补充
                 // LVal → Ident
                 Node lVal = primaryExp.childIterator(0);
+                
+                LeafNode ident = lVal.getFirstLeafNode();
+                undefineError(ident.getToken(),calculatingTable,false);
+                
                 return new ExpItem(lVal.getFirstLeafNode().getToken());
             }
         } else if (typeCheckBranch(unaryNode.childIterator(0),NonTerminator.UnaryOp)) { // UnaryOp UnaryExp
@@ -503,6 +536,9 @@ public class SymbolTableBuilder {
         } else { // ident '(' [FuncRParams] ')'
             // FuncRParams → Exp { ',' Exp }
             // todo 函数调用的错误处理在这里实现
+            
+            LeafNode ident = unaryNode.getFirstLeafNode();
+            undefineError(ident.getToken(),calculatingTable,true);
             
             Node funcRParams = unaryNode.childIterator(2);
             int i = 0;

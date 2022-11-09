@@ -9,8 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 // 语法分析 + 部分错误处理
-//- i，j，k，括号分号补全，记录错误【ijk】
-//- 处理printf和字符串的报错，记录错误【a,l】
+//- i,j,k,括号分号补全，记录错误
+//- a,l处理printf和字符串的报错，记录错误
 //- m 循环块 报错
 public class AstBuilder {
     private final List<Token> tokenList;

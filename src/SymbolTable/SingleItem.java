@@ -94,7 +94,7 @@ public class SingleItem {
         return ident;
     }
     
-    public Boolean judgeConst() {
+    public Boolean getIsConst() {
         return isConst;
     }
     
