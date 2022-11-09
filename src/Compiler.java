@@ -9,6 +9,8 @@ import component.Token;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
@@ -29,10 +31,18 @@ public class Compiler {
         SymbolTableBuilder symbolTableBuilder = new SymbolTableBuilder(ast,errorList);
         SymbolTable symbolTable = symbolTableBuilder.buildSymbolTable();  // 符号表,部分错误处理+中间代码生成
         
-        // todo errorList 按照行数排序输出
+        errorList.sort(new Comparator<Object>() {
+            @Override
+            public int compare(Object o1, Object o2) {
+                return ((MyError) o1).getLine() - ((MyError) o2).getLine();
+            }
+        });
+        PrintStream ps = new PrintStream(Config.errorPath);
+        System.setOut(ps);
         for (MyError error: errorList) {
             System.out.println(error.toString());
         }
+        ps.close();
         
         ArrayList<MidCode> midCodes = symbolTableBuilder.getMidCodes();
         HashMap<String,String> conStrings = symbolTableBuilder.getConStrings();
@@ -40,10 +50,10 @@ public class Compiler {
 //            System.out.println(midCode.toString());
 //        }
         
-        PrintStream ps = new PrintStream(Config.mipsPath);
-        System.setOut(ps);
-        MipsGenerator mipsGenerator = new MipsGenerator(midCodes,conStrings);  // mips代码生成
-        mipsGenerator.printMips();
-        ps.close();
+        //PrintStream ps = new PrintStream(Config.mipsPath);
+        //System.setOut(ps);
+        //MipsGenerator mipsGenerator = new MipsGenerator(midCodes,conStrings);  // mips代码生成
+        //mipsGenerator.printMips();
+        //ps.close();
     }
 }

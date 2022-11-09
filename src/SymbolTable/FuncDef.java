@@ -55,4 +55,8 @@ public class FuncDef {
     public Boolean judgeInt() {
         return isInt;
     }
+    
+    public Integer getParaNum() {
+        return parameters.size();
+    }
 }

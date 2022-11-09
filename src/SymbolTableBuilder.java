@@ -22,6 +22,7 @@ import java.util.HashMap;
 // -g 有返回值的函数缺少return语句
 // -f 无返回值的函数存在不匹配的return语句
 // -h 不能改变常量的值
+// -d 函数参数个数不匹配d
 public class SymbolTableBuilder {
     private Node ast;
     private ArrayList<MyError> errorList;
@@ -467,6 +468,16 @@ public class SymbolTableBuilder {
         }
     }
     
+    private void paraNumError(Integer paraRNum,Token token,SymbolTable table) {
+        String ident = token.getValue();
+        FuncDef func = table.findFunc(ident);
+        if (func != null && func.getParaNum() != paraRNum) {
+            MyError error = new MyError(ErrorTYPE.FuncParamNum_d);
+            error.setLine(token.getLine());
+            errorList.add(error);
+        }
+    }
+    
     private ExpItem AddExp(Node addNode) {   // 上面出现的Exp,ConstExp,都转换到AddExp处理
         int i = 0;
         
@@ -535,18 +546,23 @@ public class SymbolTableBuilder {
             return z;
         } else { // ident '(' [FuncRParams] ')'
             // FuncRParams → Exp { ',' Exp }
-            // todo 函数调用的错误处理在这里实现
+            // todo 函数调用,参数类型不一致
             
             LeafNode ident = unaryNode.getFirstLeafNode();
             undefineError(ident.getToken(),calculatingTable,true);
             
             Node funcRParams = unaryNode.childIterator(2);
             int i = 0;
+            int paraNum = 0;
             while (i < funcRParams.getChildren().size()) {
                 ExpItem paraReal = AddExp(funcRParams.childIterator(i).unwrap());
                 midCodes.add(new MidCode(midOp.PUSH,paraReal.getStr()));
                 i += 2;
+                paraNum += 1;
             }
+            
+            paraNumError(paraNum,ident.getToken(),calculatingTable);
+            
             midCodes.add(new MidCode(midOp.CALL,unaryNode.getFirstLeafNode().getValue()));
             ExpItem retValue = new ExpItem("retValue",localNum);
             localNum++;
@@ -620,7 +636,7 @@ public class SymbolTableBuilder {
                 case LVal:
                     // LVal  → Ident {'[' Exp ']'} todo 数组的情况补充！
                     String ident = curNode.getFirstLeafNode().getValue();
-                    return table.getValue(ident); // todo!
+                    return table.getValue(ident);
                 default:
                     System.out.println("const解析错误");
                     return 0;

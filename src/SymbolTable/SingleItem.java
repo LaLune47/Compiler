@@ -12,7 +12,6 @@ public class SingleItem {
     private String ident;
     private Integer defineLine;
     private Integer initValue;  // todo const初值，有一定作用
-    //private Integer init;  todo 符号表里面不需要存值啊！直接在中间代码就输出了
     //private boolean isInit;
 //    private Node initValue = null;
 //    private ArrayList<Node> initValueArray1 = null;
