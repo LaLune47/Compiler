@@ -33,7 +33,7 @@ public class FuncDef {
     }
     
     public void addAllParams(ArrayList<SingleItem> parameters) {
-        parameters.addAll(parameters);
+        this.parameters.addAll(parameters);
     }
     
     public String getIdent() {

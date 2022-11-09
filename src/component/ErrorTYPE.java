@@ -6,7 +6,7 @@ public enum ErrorTYPE {
     Undefine_c,
     FuncParamNum_d,
     FuncParamType_e,
-    SurplusReturn_f,
+    UnmatchReturn_f,
     MissReturn_g,
     ChangeConst_h,
     MissSEMICN_i,   // ;

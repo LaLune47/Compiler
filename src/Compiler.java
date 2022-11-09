@@ -30,9 +30,9 @@ public class Compiler {
         SymbolTable symbolTable = symbolTableBuilder.buildSymbolTable();  // 符号表,部分错误处理+中间代码生成
         
         // todo errorList 按照行数排序输出
-        //for (MyError error: errorList) {
-        //    System.out.println(error.toString());
-        //}
+        for (MyError error: errorList) {
+            System.out.println(error.toString());
+        }
         
         ArrayList<MidCode> midCodes = symbolTableBuilder.getMidCodes();
         HashMap<String,String> conStrings = symbolTableBuilder.getConStrings();

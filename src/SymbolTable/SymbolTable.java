@@ -65,6 +65,12 @@ public class SymbolTable {
         } else {
             funcs.put(func.getIdent(),func);
         }
+        
+        if (depth == 0 && items.containsKey(func.getIdent())) {
+            MyError error = new MyError(ErrorTYPE.Redefine_b);
+            error.setLine(func.getDefineLine());
+            errorList.add(error);
+        }
     }
     
     private boolean hasDefineFunc(FuncDef newFunc) {

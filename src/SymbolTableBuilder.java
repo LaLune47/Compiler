@@ -17,11 +17,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 // 部分错误处理+中间代码生成
+// -b 同作用域重定义问题
+// -g 有返回值的函数缺少return语句
+// -f 无返回值的函数存在不匹配的return语句
 public class SymbolTableBuilder {
     private Node ast;
     private ArrayList<MyError> errorList;
     private ArrayList<MidCode> midCodes;
     private HashMap<String,String> conStrings;
+    private boolean inVoidTypeFunc = false;
     private static Integer blockNum = 1;
     private static Integer localNum = 1; // 局部变量编号
     private static Integer strNum = 0;
@@ -51,7 +55,6 @@ public class SymbolTableBuilder {
                 parseDecl(child,rootTable);
             } else if (typeCheckBranch(child,NonTerminator.FuncDef)) {
                 parseFuncDef(child,rootTable);
-                // todo 全局变量和函数定义的重复问题
             }
         }
         
@@ -78,9 +81,13 @@ public class SymbolTableBuilder {
     
     private SymbolTable parseFuncBlock(Node block,Integer depth,SymbolTable parentTable,
                                        ArrayList<SingleItem> parameters,Boolean isInt) {
-        SymbolTable symbolTable = parseBlock(block,depth,parentTable);
-        symbolTable.addAllItem(parameters,errorList);  // todo 函数实参如何融入 顺序不对
-        funcReturnError(block,isInt);
+        if (isInt) {
+            missReturnError(block);
+        } else {
+            inVoidTypeFunc = true;
+        }
+        SymbolTable symbolTable = parseBlock(block,depth,parentTable,true,parameters);
+        inVoidTypeFunc = false;
         
         int length = midCodes.size();
         if (!midCodes.get(length - 1).isRet()) {
@@ -89,23 +96,16 @@ public class SymbolTableBuilder {
         return symbolTable;
     }
     
-    // todo return 的处理存在bug，看看定义
-    private void funcReturnError(Node block,Boolean isInt) {
-        //Block,     // 语句块  '{' { BlockItem } '}'
-        //BlockItem, // （不输出）语句块项   Decl | Stmt
-        //stmt ----  return
-        if (block.getChildren() != null) {
-            Integer size = block.getChildren().size();
-            Node blockItem = block.childIterator(size - 2);
-            if (isInt && !checkReturn(blockItem)) {
-                MyError error = new MyError(ErrorTYPE.MissReturn_g);
-                error.setLine(block.childIterator(size - 1).getLine());   // 括号行号
-                errorList.add(error);
-            } else if (!isInt && checkReturn(blockItem)) {
-                MyError error = new MyError(ErrorTYPE.SurplusReturn_f);
-                error.setLine(blockItem.getLine());
-                errorList.add(error);
-            }
+    //Block,     // 语句块  '{' { BlockItem } '}'
+    //BlockItem, // （不输出）语句块项   Decl | Stmt
+    //stmt ----  return
+    private void missReturnError(Node block) {
+        Integer size = block.getChildren().size();
+        Node blockItem = block.childIterator(size - 2);
+        if (!checkReturn(blockItem)) {     // -g 有返回值的函数缺少return语句
+            MyError error = new MyError(ErrorTYPE.MissReturn_g);
+            error.setLine(block.childIterator(size - 1).getLine());   // 括号行号
+            errorList.add(error);
         }
     }
     
@@ -120,9 +120,13 @@ public class SymbolTableBuilder {
         return false;
     }
     
-    private SymbolTable parseBlock(Node block,Integer depth,SymbolTable parentTable) {
+    private SymbolTable parseBlock(Node block,Integer depth,SymbolTable parentTable,
+                                   Boolean isFuncBlock,ArrayList<SingleItem> parameters) {
         // 返回该层级 Block对应的符号表，并且与parent符号表连接
         SymbolTable table = new SymbolTable(depth,parentTable);
+        if (isFuncBlock) {
+            table.addAllItem(parameters,errorList);
+        }
     
         for (Node childNode: block.getChildren()) {
             if (childNode instanceof LeafNode) {
@@ -138,31 +142,6 @@ public class SymbolTableBuilder {
         }
         return table;
     }
-    
-//    private void lValError(Node block,SymbolTable table) {
-//        //Block,     // 语句块  '{' { BlockItem } '}'
-//        //BlockItem, // （不输出）语句块项   Decl | Stmt
-//         /*  Stmt,   LVal左值表达式类，exp或者getint()
-//                     [EXP] ';'
-//                     Block嵌套
-//                     if、while等关键词
-//                    */
-//        for (Node childNode: block.getChildren()) {
-//            if (childNode instanceof LeafNode) {
-//                continue;
-//            } else {
-//                Node declOrStmt = childNode.unwrap();   // BlockItem  Decl | Stmt
-//                if (typeCheckBranch(declOrStmt,NonTerminator.Stmt)) {
-//                    Node node = declOrStmt.getFirstChild();
-//                    if (typeCheckBranch(node,NonTerminator.LVal)) {
-//                        // LVal  左值表达式  → Ident {'[' Exp ']'}
-//                        String ident = node.getFirstLeafNode().getValue();
-//                        // 左值错误   没写完呢还
-//                    }
-//                }
-//            }
-//        }
-//    }
     
     //ConstDecl, // 常量声明   'const' BType ConstDef { ',' ConstDef } ';'
     //VarDecl,   // 变量声明   BType VarDef { ',' VarDef } ';'
@@ -385,7 +364,7 @@ public class SymbolTableBuilder {
             midCodes.add(new MidCode(midOp.FUNC_BLOCK,curNum.toString(),"start"));
             blockNum++;
             
-            SymbolTable subTable = parseBlock(subBlock,depth + 1,table);
+            SymbolTable subTable = parseBlock(subBlock,depth + 1,table,false,null);
             
             midCodes.add(new MidCode(midOp.FUNC_BLOCK,curNum.toString(),"end"));
             
@@ -396,6 +375,11 @@ public class SymbolTableBuilder {
             } else {
                 ExpItem z = AddExp(stmt.childIterator(1).unwrap());
                 midCodes.add(new MidCode(midOp.RET,z.getStr()));
+                if (inVoidTypeFunc) {
+                    MyError error = new MyError(ErrorTYPE.UnmatchReturn_f);
+                    error.setLine(stmt.getFirstLeafNode().getLine());  // return 所在行号
+                    errorList.add(error);
+                }
             }
         } else if (typeCheckBranch(stmt.getFirstChild(),NonTerminator.Exp)) {
             AddExp(stmt.childIterator(0).unwrap());
