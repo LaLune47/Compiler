@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 // 语法分析 + 部分错误处理
-//- i,j,k,括号分号补全，记录错误
+//- i,j,k,括号分号补全，记录错误 todo 可能存在更多的顺序问题
 //- a,l处理printf和字符串的报错，记录错误
 //- m 循环块 报错
 public class AstBuilder {
@@ -112,7 +112,7 @@ public class AstBuilder {
         
         addLeafChild(currentNode);  // Ident
         addLeafChild(currentNode);  // '('
-        if (!curEqualTo(TokenTYPE.RPARENT)) {
+        if (!curEqualTo(TokenTYPE.RPARENT) && !curEqualTo(TokenTYPE.LBRACE)) { // 防止错误处理缺有括号的情况
             Node child2 = FuncFParams();
             currentNode.addChild(child2);
         }
@@ -364,7 +364,7 @@ public class AstBuilder {
         if (curEqualTo(TokenTYPE.IDENFR) && peekEqualTo(1,TokenTYPE.LPARENT)) {
             addLeafChild(currentNode);  // Ident
             addLeafChild(currentNode);  // (
-            if (!curEqualTo(TokenTYPE.RPARENT)) {
+            if (!curEqualTo(TokenTYPE.RPARENT) && !curEqualTo(TokenTYPE.SEMICN)) { //错误处理特殊情况，缺少右括号
                 Node child = FuncRParams();
                 currentNode.addChild(child);
             }

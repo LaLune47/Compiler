@@ -415,7 +415,7 @@ public class SymbolTableBuilder {
             
             int index = 4; // exp 最开始可能出现的地方
             for(int i = 1;i < origin.length()-1;i++) {
-                if (!origin.substring(i,i + 1).equals("%")) {
+                if (!judge_d(origin,i)) {
                     buffer.append(origin.substring(i,i + 1));
                 } else {
                     if (buffer.length() != 0) {
@@ -447,6 +447,13 @@ public class SymbolTableBuilder {
             }
             midCodes.addAll(printCodes);
         }
+    }
+    
+    private boolean judge_d(String str,Integer index) {
+        if (str.length() <= 1 || index == str.length() - 1) {
+            return false;
+        }
+        return str.substring(index,index + 1).equals("%") && str.substring(index+1,index + 2).equals("d");
     }
     
     private void undefineError(Token token,SymbolTable table,Boolean isFunc) {
