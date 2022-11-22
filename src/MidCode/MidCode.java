@@ -108,6 +108,14 @@ public class MidCode {
                 return "print \"" + z + "\"";
             case PRINTEXP:   //写变量
                 return "print " + z;
+            case ARRAY:
+                if (y == null) {
+                    return "array " + z + "[" + x + "]";
+                } else {
+                    return "array " + z + "[" + x + "]" + "[" + y + "]";
+                }
+            case AssignARRAY:
+                return z + "[" + x + "]" + " = " + y;
             default:
                 return null;
         }

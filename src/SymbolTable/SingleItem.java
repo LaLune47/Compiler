@@ -9,9 +9,14 @@ import java.util.ArrayList;
 public class SingleItem {
     private Boolean isConst;
     private Integer dimension;
-    private String ident;
+    private String ident = null;
     private Integer defineLine;
     private Integer initValue;  // todo const初值，有一定作用
+    
+    private Integer space1 = 0;   // 维度1
+    private Integer space2 = 0;   // 维度2
+    private ArrayList<Integer> arrayInitValue = new ArrayList<>();
+    
     //private boolean isInit;
 //    private Node initValue = null;
 //    private ArrayList<Node> initValueArray1 = null;
@@ -33,26 +38,20 @@ public class SingleItem {
         this.isConst = isConst;
     }
     
-//    public SingleItem(Variability variability,Dimension dimension,ArraySpace arraySpace,String ident) {
-//        this.variability = variability;
-//        this.dimension = dimension;
-//        this.arraySpace = arraySpace;
-//        this.ident = ident;
-//        this.isInit = false;
-//    }
-//
-//    public SingleItem(Variability variability) {
-//        this.variability = variability;
-//        this.dimension = null;
-//        this.arraySpace =  null;
-//        this.ident =  null;
-//    }
-//
-//    public SingleItem(Variability variability,String ident) {
-//        this.variability = variability;
-//        this.dimension = null;
-//        this.arraySpace =  null;
-//        this.ident = ident;
+    public void setSpace1(Integer space1) {
+        this.space1 = space1;
+    }
+    
+    public void setSpace2(Integer space2) {
+        this.space2 = space2;
+    }
+    
+    public void addArrayInit(Integer value) {
+        arrayInitValue.add(value);
+    }
+
+//    private Integer tranArray(Integer i,Integer j,Integer space2) {
+//        return i * space2 + j;
 //    }
     
     public void setDefineLine(Integer defineLine) {
@@ -65,9 +64,6 @@ public class SingleItem {
     
     public void setDimension(Integer dimension) {
         this.dimension = dimension;
-//        if (dimension.equals(Dimension.Array2)) {
-//            //initValueArray2 = new ArrayList<>();
-//        }
     }
     
     private boolean typeCheckLeaf(Node node, TokenTYPE type) {
@@ -76,14 +72,6 @@ public class SingleItem {
         }
         return false;
     }
-    
-//    private Node unwrap(Node node) { // 去掉一层
-//        Node tempNode = node;
-//        if (!node.getChildren().isEmpty()) {
-//            tempNode = node.getChildren().get(0);  // addExp;
-//        }
-//        return tempNode;
-//    }
     
     public void setIdent(String ident) {
         this.ident = ident;

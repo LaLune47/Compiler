@@ -38,9 +38,9 @@ public enum midOp {
     Jump,  //跳转标记
     BZ,    //不满足条件跳转
     BNZ,   //满足条件跳转
-    
-    GETARRAY,  //取数组的值  t = a[]
-    PUTARRAY,  //给数组赋值  a[] = t
+
+    GetARRAY,  //取数组的值  t = a[]
+    AssignARRAY,  //给数组赋值  a[] = t
     
     DEFAULT
 }

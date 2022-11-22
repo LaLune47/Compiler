@@ -172,11 +172,11 @@ public class SymbolTableBuilder {
     //VarDef,  // 变量定义  Ident { '[' ConstExp ']' } | Ident { '[' ConstExp ']' } '=' InitVal
     private void parseVarDef(Node node,SymbolTable table) {
         // node是 VarDef
-        SingleItem item = new SingleItem(false,0);   // todo 数组更改
+        SingleItem item = new SingleItem(false);
         item.setDefineLine(node.getLine());
-        
-        Integer index = 0;// InitVal位置
         ArrayList<Node> children = node.getChildren();
+        
+        Integer index = 0;// InitVal位置,跟常量不一样，还存在没有初值的情况
     
         MidCode midCode = null;
         
@@ -197,27 +197,68 @@ public class SymbolTableBuilder {
                 midCode.setX(AddExp(addExp).getStr());
                 calculatingTable = null;
             }
+            midCodes.add(midCode);
+        } else if (4 <= children.size() && typeCheckLeaf(children.get(1),TokenTYPE.LBRACK)) {
+            midCode = new MidCode(midOp.ARRAY,item.getIdent());
+    
+            Integer space1 = CalConst(children.get(2),table);
+            item.setSpace1(space1);
+            midCode.setX(space1.toString());
+    
+            if (7 <= children.size() && typeCheckLeaf(children.get(4),TokenTYPE.LBRACK)) {
+                item.setDimension(2);
+                Integer space2 = CalConst(children.get(5),table);
+                item.setSpace2(space2);
+                midCode.setY(space2.toString());
+                midCodes.add(midCode);
+                if (9 == children.size()) {
+                    praseInitVal(children.get(8),space1,space2,item,table);
+                }
+            } else {
+                item.setDimension(1);
+                midCodes.add(midCode);
+                if (6 == children.size()) {
+                    praseInitVal(children.get(5),space1,0,item,table);
+                }
+            }
         }
-//        else if (4 <= children.size() && typeCheckLeaf(children.get(1),TokenTYPE.LBRACK)) {
-//            if (7 <= children.size() && typeCheckLeaf(children.get(4),TokenTYPE.LBRACK)) {
-//                item.setDimension(Dimension.Array2);
-//                item.setArraySpace(new ArraySpace(children.get(2),children.get(5)));
-//            } else {
-//                item.setDimension(Dimension.Array1);
-//                item.setArraySpace(new ArraySpace(children.get(2)));
-//            }
-//        }
         table.addItem(item,errorList);
-        midCodes.add(midCode);
+        //midCodes.add(midCode);
+    }
+    
+    private void praseInitVal(Node Init, Integer space1,Integer space2,
+                              SingleItem item,SymbolTable table) {
+        if (space2 == 0) {
+            for(Integer i = 0;i < space1;i++) {
+                Node node = Init.childIterator(2 * i + 1);
+                
+                Node addExp = node.unwrap().unwrap();
+                calculatingTable = table;
+                MidCode midCode = new MidCode(midOp.AssignARRAY,item.getIdent(),i.toString(),AddExp(addExp).getStr());
+                midCodes.add(midCode);
+                calculatingTable = null;
+            }
+        } else {
+            for(Integer i = 0;i < space1;i++)  {
+                Node outNode = Init.childIterator(2 * i + 1);
+                for(Integer j = 0;j < space2;j++) {
+                    Node node = outNode.childIterator(2 * j + 1);
+    
+                    Node addExp = node.unwrap().unwrap();
+                    calculatingTable = table;
+                    MidCode midCode = new MidCode(midOp.AssignARRAY,item.getIdent(),i.toString(),AddExp(addExp).getStr());
+                    midCodes.add(midCode);
+                    calculatingTable = null;
+                }
+            }
+        }
     }
     
     //ConstDef,  // 常数定义   Ident { '[' ConstExp ']' } '=' ConstInitVal
     private void parseConstDef(Node node,SymbolTable table) {
         // node是 ConstDef
-        // todo 数组定义这里，错误处理部分好像写多了，代码生成部分写
         SingleItem item = new SingleItem(true);
         item.setDefineLine(node.getLine());
-        Integer index = 0;// ConstInitVal位置
         ArrayList<Node> children = node.getChildren();
         
         MidCode midCode = null;
@@ -226,27 +267,66 @@ public class SymbolTableBuilder {
             item.setDimension(0);
             item.setIdent(((LeafNode)children.get(0)).getValue());
             midCode = new MidCode(midOp.CONST,item.getIdent());
-            index = 2;
             if (children.size() == 3) {
-                Integer initValue = CalConst(children.get(2).getFirstChild(),table);  // todo 数组
+                Integer initValue = CalConst(children.get(2).getFirstChild(),table);
                 item.setInit(initValue);
                 midCode.setX(initValue.toString());
             }
+            midCodes.add(midCode);
+        } else if (5 < children.size() && typeCheckLeaf(children.get(1),TokenTYPE.LBRACK)) {
+            item.setIdent(((LeafNode)children.get(0)).getValue());
+            midCode = new MidCode(midOp.ARRAY,item.getIdent());
+    
+            Integer space1 = CalConst(children.get(2),table);
+            item.setSpace1(space1);
+            midCode.setX(space1.toString());
+            
+            if (8 < children.size() && typeCheckLeaf(children.get(4),TokenTYPE.LBRACK)) {
+                item.setDimension(2);
+                Integer space2 = CalConst(children.get(5),table);
+                item.setSpace2(space2);
+                midCode.setY(space2.toString());
+                midCodes.add(midCode);
+                praseConstInitVal(children.get(8),space1,space2,item,table);
+            } else {
+                item.setDimension(1);
+                midCodes.add(midCode);
+                praseConstInitVal(children.get(5),space1,0,item,table);
+            }
         }
-//        else if (5 < children.size() && typeCheckLeaf(children.get(1),TokenTYPE.LBRACK)) {
-//            item.setIdent(((LeafNode)children.get(0)).getValue());
-//            if (8 < children.size() && typeCheckLeaf(children.get(4),TokenTYPE.LBRACK)) {
-//                item.setDimension(Dimension.Array2);
-//                item.setArraySpace(new ArraySpace(children.get(2),children.get(5)));
-//                index = 8;
-//            } else {
-//                item.setDimension(Dimension.Array1);
-//                item.setArraySpace(new ArraySpace(children.get(2)));
-//                index = 5;
-//            }
-//        }
         table.addItem(item,errorList);
-        midCodes.add(midCode);
+        //midCodes.add(midCode);
+    }
+    
+    private void praseConstInitVal(Node conInit, Integer space1,Integer space2,
+                                   SingleItem item,SymbolTable table) {
+        // {ConstInitVal,ConstInitVal}, -> constExp
+        // [4][2] {ConstInitVal,ConstInitVal，ConstInitVal,ConstInitVal},
+        if (space2 == 0) {
+            for(Integer i = 0;i < space1;i++) {
+                Node node = conInit.childIterator(2 * i + 1);
+                Integer init = CalConst(node.unwrap(),table);
+                item.addArrayInit(init);
+                MidCode midCode = new MidCode(midOp.AssignARRAY,item.getIdent(),i.toString(),init.toString());
+                midCodes.add(midCode);
+            }
+        } else {
+            for(Integer i = 0;i < space1;i++)  {
+                Node outNode = conInit.childIterator(2 * i + 1);
+                for(Integer j = 0;j < space2;j++) {
+                    Node node = outNode.childIterator(2 * j + 1);
+                    Integer init = CalConst(node.unwrap(),table);
+                    item.addArrayInit(init);
+                    MidCode midCode = new MidCode(midOp.AssignARRAY,item.getIdent(),
+                            tranArray(i,j,space2).toString(),init.toString());
+                    midCodes.add(midCode);
+                }
+            }
+        }
+    }
+    
+    private Integer tranArray(Integer i,Integer j,Integer space2) {
+        return i * space2 + j;
     }
     
     private void parseFuncDef(Node node,SymbolTable table) {
@@ -588,6 +668,7 @@ public class SymbolTableBuilder {
             NonTerminator type = curNode.getNonTerminator();
             switch (type) {
                 case ConstExp:
+                case Exp:  // 嵌套有exp的情况,但是最外层不是constExp还是会出错
                 case Number:
                     return CalConst(curNode.unwrap(),table);
                 case AddExp:
