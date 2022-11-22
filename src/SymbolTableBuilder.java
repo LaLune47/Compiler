@@ -246,7 +246,8 @@ public class SymbolTableBuilder {
     
                     Node addExp = node.unwrap().unwrap();
                     calculatingTable = table;
-                    MidCode midCode = new MidCode(midOp.AssignARRAY,item.getIdent(),i.toString(),AddExp(addExp).getStr());
+                    MidCode midCode = new MidCode(midOp.AssignARRAY,item.getIdent(),
+                        tranArray(i,j,space2).toString(),AddExp(addExp).getStr());
                     midCodes.add(midCode);
                     calculatingTable = null;
                 }
@@ -393,7 +394,7 @@ public class SymbolTableBuilder {
             midCode.setZ(ident.getValue());
         }
         
-        if (children.size() == 2) {   // todo 数组
+        if (children.size() == 2) {   // todo 函数形参,数组
             item.setDimension(0);
             midCode.setX("0");
         } else if (children.size() == 4) {
@@ -422,7 +423,7 @@ public class SymbolTableBuilder {
     }
     
     private void Stmt(Node stmt,SymbolTable table,Integer depth){
-    /*  Stmt → // todo 中间代码生成后半部分
+    /*  Stmt → // todo 中间代码生成后半部分,控制流部分
         第一次: | Block
         第一次: | 'return' [Exp] ';' // f i
         第一次: | [Exp] ';'
@@ -466,6 +467,7 @@ public class SymbolTableBuilder {
             calculatingTable = null;
         }
         else if (typeCheckBranch(stmt.getFirstChild(),NonTerminator.LVal)) {
+            // LVal '=' Exp ';'    LVal '=' 'getint''('')'';'
             LeafNode ident = stmt.getFirstLeafNode();
             undefineError(ident.getToken(),table,false);
             changeConstError(ident.getToken(),table);
@@ -480,11 +482,18 @@ public class SymbolTableBuilder {
                 localNum++;
                 midCodes.add(new MidCode(midOp.SCAN,xItem.getStr()));
             }
-            // LVal  Ident {'[' Exp ']'}
+            
             Node lVal = stmt.getFirstChild();
-            ExpItem z = new ExpItem(lVal.getFirstLeafNode().getToken());   // todo 数组再改
-    
-            midCodes.add(new MidCode(midOp.ASSIGNOP,z.getStr(),xItem.getStr()));
+            ExpItem z = new ExpItem(lVal.getFirstLeafNode().getToken());
+            if (lVal.getLastLeafNode().getTokenType().equals(TokenTYPE.RBRACK)) { // 左值表达式是数组元素
+                ExpItem y = xItem;
+                calculatingTable = table;
+                ExpItem x = lvalArrayIndex(lVal);
+                calculatingTable = null;
+                midCodes.add(new MidCode(midOp.AssignARRAY,z.getStr(),x.getStr(), y.getStr()));
+            } else {
+                midCodes.add(new MidCode(midOp.ASSIGNOP,z.getStr(),xItem.getStr()));
+            }
         }
         else if (typeCheckLeaf(stmt.getFirstLeafNode(),TokenTYPE.PRINTFTK)) {
             // 'printf''('FormatString{,Exp}')'';' // i j l
@@ -565,6 +574,27 @@ public class SymbolTableBuilder {
         }
     }
     
+    private ExpItem lvalArrayIndex(Node lVal) {
+        // Ident '[' Exp ']'  或者 Ident '[' Exp ']' '[' Exp ']'
+        if (lVal.getChildren()!= null && lVal.getChildren().size() == 4) {
+            return AddExp(lVal.childIterator(2).unwrap());
+        } else {
+            String ident = lVal.getFirstLeafNode().getValue();
+            Integer space2 = calculatingTable.findItem_space2(ident);
+            
+            ExpItem i = AddExp(lVal.childIterator(2).unwrap());
+            ExpItem itemSpace2 = new ExpItem("intConst",space2);
+            ExpItem i_space2 = new ExpItem(midOp.MULTOP,i,itemSpace2,localNum);
+            localNum++;
+            midCodes.add(i_space2.toMidCode());
+            ExpItem j = AddExp(lVal.childIterator(5).unwrap());
+            ExpItem index = new ExpItem(midOp.PLUSOP,i_space2,j,localNum);
+            localNum++;
+            midCodes.add(index.toMidCode());
+            return index;
+        }
+    }
+    
     private ExpItem AddExp(Node addNode) {   // 上面出现的Exp,ConstExp,都转换到AddExp处理
         int i = 0;
         
@@ -613,14 +643,23 @@ public class SymbolTableBuilder {
                 Node number = primaryExp.childIterator(0);
                 return new ExpItem(number.getFirstLeafNode().getToken());
             } else {
-                // LVal → Ident {'[' Exp ']'}  todo 数组实现补充
+                // LVal → Ident {'[' Exp ']'}
                 // LVal → Ident
                 Node lVal = primaryExp.childIterator(0);
                 
                 LeafNode ident = lVal.getFirstLeafNode();
                 undefineError(ident.getToken(),calculatingTable,false);
                 
-                return new ExpItem(lVal.getFirstLeafNode().getToken());
+                if (lVal.getLastLeafNode().getTokenType().equals(TokenTYPE.RBRACK)) { // 左值表达式是数组元素
+                    ExpItem y = lvalArrayIndex(lVal);
+                    ExpItem x = new ExpItem(lVal.getFirstLeafNode().getToken());
+                    ExpItem z = new ExpItem("getARRAY",localNum);
+                    localNum++;
+                    midCodes.add(new MidCode(midOp.GetARRAY,z.getStr(),x.getStr(), y.getStr()));
+                    return z;
+                } else {
+                    return new ExpItem(lVal.getFirstLeafNode().getToken());
+                }
             }
         } else if (typeCheckBranch(unaryNode.childIterator(0),NonTerminator.UnaryOp)) { // UnaryOp UnaryExp
             //UnaryOp,  '+' | '−' | '!' '!'仅出现在条件表达式中  todo !补充实现，因为暂时没有条件表达式
@@ -722,9 +761,19 @@ public class SymbolTableBuilder {
                         return CalConst(curNode.unwrap(),table);
                     }
                 case LVal:
-                    // LVal  → Ident {'[' Exp ']'} todo 数组的情况补充！
+                    // LVal  → Ident {'[' Exp ']'}
                     String ident = curNode.getFirstLeafNode().getValue();
-                    return table.getValue(ident);
+                    if (curNode.getLastLeafNode().getTokenType().equals(TokenTYPE.RBRACK)) { // 左值表达式是数组元素
+                        Integer i = CalConst(curNode.childIterator(2),table);
+                        if (curNode.getChildren() != null && curNode.getChildren().size() == 4) {
+                            return table.getArrayValue1(ident,i);
+                        } else if (curNode.getChildren() != null && curNode.getChildren().size() == 7) {
+                            Integer j = CalConst(curNode.childIterator(5),table);
+                            return table.getArrayValue2(ident,i,j);
+                        }
+                    } else {
+                        return table.getValue(ident);
+                    }
                 default:
                     System.out.println("const解析错误");
                     return 0;

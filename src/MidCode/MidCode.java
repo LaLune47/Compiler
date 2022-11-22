@@ -102,6 +102,12 @@ public class MidCode {
                 return "scan " + z;
             case ASSIGNOP:
                 return z + " = " + x;
+            case AssignARRAY:
+                return z + "[" + x + "]" + " = " + y;
+                
+            case GetARRAY:
+                return z + " = " + x + "[" + y + "]";
+                
             case STRCON:
                 return "const str " + z;
             case PRINTSTR:   //写字符串
@@ -114,8 +120,6 @@ public class MidCode {
                 } else {
                     return "array " + z + "[" + x + "]" + "[" + y + "]";
                 }
-            case AssignARRAY:
-                return z + "[" + x + "]" + " = " + y;
             default:
                 return null;
         }

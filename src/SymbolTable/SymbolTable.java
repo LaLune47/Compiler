@@ -109,6 +109,33 @@ public class SymbolTable {
         }
     }
     
+    public Integer getArrayValue1(String ident,Integer i) {
+        SingleItem item = findItem(ident);
+        if (item.getDimension() == 1) {
+            return item.getArrayValue1(i);
+        } else {
+            return 0;
+        }
+    }
+    
+    public Integer getArrayValue2(String ident,Integer i,Integer j) {
+        SingleItem item = findItem(ident);
+        if (item.getDimension() == 2) {
+            return item.getArrayValue2(i,j);
+        } else {
+            return 0;
+        }
+    }
+    
+    public Integer findItem_space2(String ident) {
+        SingleItem item = findItem(ident);
+        if (item.getDimension() == 2) {
+            return item.getSpace2();
+        } else {
+            return 0;
+        }
+    }
+    
     public SymbolTable findRootTable() {
         SymbolTable table = this;
         while (table.getDepth() != 0) {

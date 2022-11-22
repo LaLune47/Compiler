@@ -46,6 +46,32 @@ public class SingleItem {
         this.space2 = space2;
     }
     
+    public Integer getSpace2() {
+        return space2;
+    }
+    
+    public Integer getDimension() {
+        return dimension;
+    }
+    
+    public Integer getArrayValue1(Integer index) {
+        if (arrayInitValue.size() > index) {
+            return arrayInitValue.get(index);
+        } else {
+            System.out.println("getArrayValue1----error");
+            return 0;
+        }
+    }
+    
+    public Integer getArrayValue2(Integer i,Integer j) {
+        if (arrayInitValue.size() > i * space2 + j) {
+            return arrayInitValue.get(i * space2 + j);
+        } else {
+            System.out.println("getArrayValue2----error");
+            return 0;
+        }
+    }
+    
     public void addArrayInit(Integer value) {
         arrayInitValue.add(value);
     }
