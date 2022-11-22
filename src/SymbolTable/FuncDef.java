@@ -59,4 +59,8 @@ public class FuncDef {
     public Integer getParaNum() {
         return parameters.size();
     }
+    
+    public ArrayList<SingleItem> getParameters() {
+        return parameters;
+    }
 }

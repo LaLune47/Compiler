@@ -120,14 +120,23 @@ public class SymbolTable {
     
     public Integer getArrayValue2(String ident,Integer i,Integer j) {
         SingleItem item = findItem(ident);
-        if (item.getDimension() == 2) {
-            return item.getArrayValue2(i,j);
+        if (item != null) {
+            return item.getDimension();
         } else {
             return 0;
         }
     }
     
     public Integer findItem_space2(String ident) {
+        SingleItem item = findItem(ident);
+        if (item != null && item.getDimension() == 2) {
+            return item.getSpace2();
+        } else {
+            return 0;
+        }
+    }
+    
+    public Integer findItem_dimension(String ident) {
         SingleItem item = findItem(ident);
         if (item.getDimension() == 2) {
             return item.getSpace2();
@@ -152,6 +161,18 @@ public class SymbolTable {
             return funcDefHashMap.get(ident);
         } else {
             return null;
+        }
+    }
+    
+    public Integer findFunc_returnType(String ident) {
+        FuncDef funcDef = findFunc(ident);
+        if (funcDef == null) {
+            return 1111;
+        }
+        if(funcDef.judgeInt()) {  // int 0维度
+            return 0;
+        } else {
+            return -1;
         }
     }
     

@@ -374,7 +374,8 @@ public class SymbolTableBuilder {
         
         int index = 0;
         while(index < children.size()) {
-            params.add(parseFuncFParam(children.get(index)));
+            SingleItem item = parseFuncFParam(children.get(index));
+            params.add(item);
             index += 2;
         }
         
@@ -448,7 +449,7 @@ public class SymbolTableBuilder {
             
             table.addChild(subTable);
         } else if (typeCheckLeaf(stmt.getFirstLeafNode(),TokenTYPE.RETURNTK)) {
-            if (stmt.childIterator(1).equals(TokenTYPE.SEMICN)) {  // return ;
+            if (typeCheckLeaf(stmt.childIterator(1),TokenTYPE.SEMICN)) {  // return ;
                 // 什么都不用做，外层做了
             } else {
                 calculatingTable = table;
@@ -564,12 +565,59 @@ public class SymbolTableBuilder {
         }
     }
     
-    private void paraNumError(Integer paraRNum,Token token,SymbolTable table) {
+    private Boolean paraNumError(Integer paraRNum,Token token,SymbolTable table) {
         String ident = token.getValue();
         FuncDef func = table.findFunc(ident);
         if (func != null && func.getParaNum() != paraRNum) {
             MyError error = new MyError(ErrorTYPE.FuncParamNum_d);
             error.setLine(token.getLine());
+            errorList.add(error);
+            return true;
+        }
+        return false;
+    }
+    
+    private void paraTypeError(Node funcRParams,Token token,SymbolTable table) {
+        // FuncRParams → Exp { ',' Exp }
+        if (funcRParams == null) {
+            return;
+        }
+        String ident = token.getValue();
+        FuncDef func = table.findFunc(ident);
+        ArrayList<SingleItem> parameters = null;
+        if (func != null) {
+            parameters = func.getParameters();
+        }
+        if (parameters != null) {
+            for (int i = 0;i < parameters.size();i++) {
+                paraTypeCheck(parameters.get(i),funcRParams.childIterator(2*i),table,token.getLine());
+            }
+        }
+    }
+    
+    private void paraTypeCheck(SingleItem item,Node exp,SymbolTable table,Integer line) {
+        int dimension = 0;
+        // 正常都是0维，把void算成-1
+        // void/int : exp,addExp,mulExp,unaryExp, Ident '(' [FuncRParams] ')' 函数调用
+        // 0/1/2:     exp,addExp,mulExp,unaryExp, PrimaryExp, LVal ,Ident {'[' Exp ']'}
+        if (exp.unwrap() != null && exp.unwrap().unwrap() != null
+                && exp.unwrap().unwrap().unwrap() != null
+                && typeCheckBranch(exp.unwrap().unwrap().unwrap(),NonTerminator.UnaryExp)) {
+            Node unaryExp = exp.unwrap().unwrap().unwrap();
+            if (unaryExp.unwrap() != null && unaryExp.unwrap().unwrap() != null
+                    &&  typeCheckBranch(unaryExp.unwrap().unwrap(),NonTerminator.LVal)) {
+                Node lVal = unaryExp.unwrap().unwrap();
+                String ident = lVal.getFirstLeafNode().getValue();
+                int num = (lVal.getChildren().size() - 1) / 3;  // 实参括号数
+                dimension = table.findItem_dimension(ident) - num;
+            } else if (typeCheckLeaf(unaryExp.getFirstChild(),TokenTYPE.IDENFR)) {
+                String ident = unaryExp.getFirstLeafNode().getValue();
+                dimension = table.findFunc_returnType(ident);
+            }
+        }
+        if (item != null && dimension != item.getDimension()) {
+            MyError error = new MyError(ErrorTYPE.FuncParamType_e);
+            error.setLine(line);
             errorList.add(error);
         }
     }
@@ -677,17 +725,23 @@ public class SymbolTableBuilder {
             LeafNode ident = unaryNode.getFirstLeafNode();
             undefineError(ident.getToken(),calculatingTable,true);
             
-            Node funcRParams = unaryNode.childIterator(2);
+            Node funcRParams = null;
             int i = 0;
             int paraNum = 0;
-            while (i < funcRParams.getChildren().size()) {
-                ExpItem paraReal = AddExp(funcRParams.childIterator(i).unwrap());
-                midCodes.add(new MidCode(midOp.PUSH,paraReal.getStr()));
-                i += 2;
-                paraNum += 1;
+            if (unaryNode.getChildren() != null && unaryNode.getChildren().size() == 4) {
+                funcRParams = unaryNode.childIterator(2);
+                while (i < funcRParams.getChildren().size()) {
+                    ExpItem paraReal = AddExp(funcRParams.childIterator(i).unwrap());
+                    midCodes.add(new MidCode(midOp.PUSH,paraReal.getStr()));  // todo 数组地址，指针变量区分问题
+                    i += 2;
+                    paraNum += 1;
+                }
             }
             
-            paraNumError(paraNum,ident.getToken(),calculatingTable);
+            Boolean hasNumError = paraNumError(paraNum,ident.getToken(),calculatingTable);
+            if (!hasNumError) {
+                paraTypeError(funcRParams,ident.getToken(),calculatingTable);
+            }
             
             midCodes.add(new MidCode(midOp.CALL,unaryNode.getFirstLeafNode().getValue()));
             ExpItem retValue = new ExpItem("retValue",localNum);
