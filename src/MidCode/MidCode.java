@@ -57,11 +57,11 @@ public class MidCode {
                 }
             case FUNC:
                 return x + " " + z + "( )";   // z 为ident,x为返回种类
-            case FUNC_BLOCK:
+            case BLOCK:
                 if (x.equals("start")) {
-                    return "<--------FUNC_BLOCK " + z + " " + x + "--------";
+                    return "<--------BLOCK " + z + " " + x + "--------";
                 } else {
-                    return "---------FUNC_BLOCK " + z + " " + x + "--------->";
+                    return "---------BLOCK " + z + " " + x + "--------->";
                 }
             case PARA:
                 if (x.equals("0")) {   // todo 形参数组

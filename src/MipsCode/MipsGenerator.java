@@ -198,7 +198,7 @@ public class MipsGenerator {
                     finalCodes.add(new FinalCode(mipsOp.li,"$v0","","",1));
                     finalCodes.add(new FinalCode(mipsOp.syscall));
                     break;
-                case FUNC_BLOCK:
+                case BLOCK:
                     if (midCode.x.equals("start")) {
                         curTable = new IntegerTable(curTable);
                     } else {

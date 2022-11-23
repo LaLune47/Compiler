@@ -72,13 +72,13 @@ public class SymbolTableBuilder {
             block = mainFunc.getChildren().get(4);
             
             Integer curNum = blockNum;
-            midCodes.add(new MidCode(midOp.FUNC_BLOCK,curNum.toString(),"start"));
+            midCodes.add(new MidCode(midOp.BLOCK,curNum.toString(),"start"));
             blockNum++;
             midCodes.add(new MidCode(midOp.MAIN));
             
             SymbolTable childTable = parseFuncBlock(block,1,rootTable,null,true);
             
-            midCodes.add(new MidCode(midOp.FUNC_BLOCK,curNum.toString(),"end"));
+            midCodes.add(new MidCode(midOp.BLOCK,curNum.toString(),"end"));
             midCodes.add(new MidCode(midOp.EXIT));
             
             rootTable.addChild(childTable);
@@ -215,13 +215,13 @@ public class SymbolTableBuilder {
                 midCode.setY(space2.toString());
                 midCodes.add(midCode);
                 if (9 == children.size()) {
-                    praseInitVal(children.get(8),space1,space2,item,table);
+                    parseInitVal(children.get(8),space1,space2,item,table);
                 }
             } else {
                 item.setDimension(1);
                 midCodes.add(midCode);
                 if (6 == children.size()) {
-                    praseInitVal(children.get(5),space1,0,item,table);
+                    parseInitVal(children.get(5),space1,0,item,table);
                 }
             }
         }
@@ -229,7 +229,7 @@ public class SymbolTableBuilder {
         //midCodes.add(midCode);
     }
     
-    private void praseInitVal(Node Init, Integer space1,Integer space2,
+    private void parseInitVal(Node Init, Integer space1,Integer space2,
                               SingleItem item,SymbolTable table) {
         if (space2 == 0) {
             for(Integer i = 0;i < space1;i++) {
@@ -291,18 +291,18 @@ public class SymbolTableBuilder {
                 item.setSpace2(space2);
                 midCode.setY(space2.toString());
                 midCodes.add(midCode);
-                praseConstInitVal(children.get(8),space1,space2,item,table);
+                parseConstInitVal(children.get(8),space1,space2,item,table);
             } else {
                 item.setDimension(1);
                 midCodes.add(midCode);
-                praseConstInitVal(children.get(5),space1,0,item,table);
+                parseConstInitVal(children.get(5),space1,0,item,table);
             }
         }
         table.addItem(item,errorList);
         //midCodes.add(midCode);
     }
     
-    private void praseConstInitVal(Node conInit, Integer space1,Integer space2,
+    private void parseConstInitVal(Node conInit, Integer space1,Integer space2,
                                    SingleItem item,SymbolTable table) {
         // {ConstInitVal,ConstInitVal}, -> constExp
         // [4][2] {ConstInitVal,ConstInitVal，ConstInitVal,ConstInitVal},
@@ -341,7 +341,7 @@ public class SymbolTableBuilder {
         
         Integer curNum = blockNum;
         blockNum++;
-        midCodes.add(new MidCode(midOp.FUNC_BLOCK,curNum.toString(),"start"));
+        midCodes.add(new MidCode(midOp.BLOCK,curNum.toString(),"start"));
         
         if (children.size() >= 5) {
             Token funcType = node.getFirstLeafNode().getToken();
@@ -367,7 +367,7 @@ public class SymbolTableBuilder {
         table.addChild(subTable);
         funcDef.setSymbolTable(subTable);
         
-        midCodes.add(new MidCode(midOp.FUNC_BLOCK,curNum.toString(),"end"));
+        midCodes.add(new MidCode(midOp.BLOCK,curNum.toString(),"end"));
     }
     
     private ArrayList<SingleItem> parseFuncFParams(Node funcFParamsNode) {
@@ -444,12 +444,12 @@ public class SymbolTableBuilder {
             Node subBlock = stmt.getFirstChild();
             
             Integer curNum = blockNum;
-            midCodes.add(new MidCode(midOp.FUNC_BLOCK,curNum.toString(),"start"));
+            midCodes.add(new MidCode(midOp.BLOCK,curNum.toString(),"start"));
             blockNum++;
             
             SymbolTable subTable = parseBlock(subBlock,depth + 1,table,false,null);
             
-            midCodes.add(new MidCode(midOp.FUNC_BLOCK,curNum.toString(),"end"));
+            midCodes.add(new MidCode(midOp.BLOCK,curNum.toString(),"end"));
             
             table.addChild(subTable);
         }
@@ -546,20 +546,32 @@ public class SymbolTableBuilder {
             midCodes.addAll(printCodes);
         }
         else if (typeCheckLeaf(stmt.getFirstLeafNode(),TokenTYPE.WHILETK)) {
+            //循环开始，在条件判断之前
+            Integer startNum = ++globalLabelNum;
+            midCodes.add(new MidCode(midOp.LABEL,startNum.toString()));
+            
+            //循环条件判断，跳转
             Node cond = stmt.childIterator(2);
             Integer falseNum = globalLabelNum + 1;
+            Integer endNum = falseNum;
             Cond(cond);
             Integer trueNum = globalLabelNum;
-            
+    
+            //循环条件满足，执行：
             midCodes.add(new MidCode(midOp.LABEL,trueNum.toString()));
-            /*
-                这里写条件正确的内容
-            */
+            Node block = stmt.childIterator(4).unwrap();
+            Integer curNum = blockNum;
+            midCodes.add(new MidCode(midOp.BLOCK,curNum.toString(),"start"));
+            blockNum++;
+            SymbolTable subTable = parseBlock(block,depth + 1,table,false,null);
+            // todo:循环特殊在，还有break和continue，再包一层parseWhileBlock，传入start和end(或者用全局变量也行)
+            midCodes.add(new MidCode(midOp.BLOCK,curNum.toString(),"end"));
+            table.addChild(subTable);
+            //再次条件判断
+            midCodes.add(new MidCode(midOp.GOTO,startNum.toString()));
             
+            // 循环条件不满足，执行： （此语句结束后面没有内容）
             midCodes.add(new MidCode(midOp.LABEL,falseNum.toString()));
-            /*
-                这里写条件错误的内容
-            */
         }
     }
     
