@@ -56,6 +56,9 @@ public class AstBuilder {
     }
     
     public boolean curEqualTo(TokenTYPE type) {
+        if (curToken() == null) {
+            return false;
+        }
         return curToken().getType().equals(type);
     }
     
@@ -583,7 +586,7 @@ public class AstBuilder {
             }
         } else if (curEqualTo(TokenTYPE.RETURNTK)) {
             addLeafChild(currentNode);  // return
-            if (!curEqualTo(TokenTYPE.SEMICN)) {
+            if (expCondition()) {
                 Node child = Exp();
                 currentNode.addChild(child);
             }
@@ -593,6 +596,7 @@ public class AstBuilder {
                 addLeafChild(currentNode);  // ';'
             }
         } else if (curEqualTo(TokenTYPE.PRINTFTK)) {
+            Token print = curToken();
             addLeafChild(currentNode);   // printf
             addLeafChild(currentNode);   // '('
             Integer paraNum1 = checkParaNum(curToken().getValue());
@@ -680,6 +684,11 @@ public class AstBuilder {
         return curEqualTo(TokenTYPE.LPARENT) ||
                 curEqualTo(TokenTYPE.INTCON) || isUnaryOp()
                 || (curEqualTo(TokenTYPE.IDENFR) && peekEqualTo(1,TokenTYPE.LPARENT));
+    }
+    
+    private boolean expCondition() {   // exp的first集合
+        return curEqualTo(TokenTYPE.LPARENT) || curEqualTo(TokenTYPE.INTCON)
+                || isUnaryOp() || (curEqualTo(TokenTYPE.IDENFR));
     }
     
     // 条件表达式   → LOrExp

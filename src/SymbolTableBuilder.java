@@ -432,6 +432,7 @@ public class SymbolTableBuilder {
         第一次: | LVal '=' 'getint''('')'';' // h i j
         第一次: | 'printf''('FormatString{,Exp}')'';' // i j l
         
+        // todo 与block相关的定义范围的错误处理，还没搞定呢
         | 'if' '(' Cond ')' Stmt [ 'else' Stmt ]
         | 'while' '(' Cond ')' Stmt // j
         | 'break' ';' | 'continue' ';' // i m
@@ -517,10 +518,12 @@ public class SymbolTableBuilder {
                         }
                         buffer.setLength(0);
                     }
-                    calculatingTable = table;
-                    ExpItem exp = AddExp(stmt.childIterator(index).unwrap());
-                    calculatingTable = null;
-                    printCodes.add(new MidCode(midOp.PRINTEXP,exp.getStr()));
+                    if (typeCheckBranch(stmt.childIterator(index),NonTerminator.Exp)) {
+                        calculatingTable = table;
+                        ExpItem exp = AddExp(stmt.childIterator(index).unwrap());
+                        calculatingTable = null;
+                        printCodes.add(new MidCode(midOp.PRINTEXP,exp.getStr()));
+                    }
                     
                     buffer.setLength(0);
                     i++;
