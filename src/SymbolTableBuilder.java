@@ -34,6 +34,10 @@ public class SymbolTableBuilder {
     private static Integer strNum = 0;
     private SymbolTable calculatingTable = null; // 从addExp、Cond、CalExp下去
     
+    // cond:一些位置
+    private Integer nextOrBegin = 0;
+    private Integer endCond = 0;
+    
     public SymbolTableBuilder(Node ast,ArrayList<MyError> errorList) {
         this.ast = ast;
         this.errorList = errorList;
@@ -449,7 +453,8 @@ public class SymbolTableBuilder {
             midCodes.add(new MidCode(midOp.FUNC_BLOCK,curNum.toString(),"end"));
             
             table.addChild(subTable);
-        } else if (typeCheckLeaf(stmt.getFirstLeafNode(),TokenTYPE.RETURNTK)) {
+        }
+        else if (typeCheckLeaf(stmt.getFirstLeafNode(),TokenTYPE.RETURNTK)) {
             if (typeCheckLeaf(stmt.childIterator(1),TokenTYPE.SEMICN)) {  // return ;
                 // 什么都不用做，外层做了
             } else {
@@ -463,7 +468,8 @@ public class SymbolTableBuilder {
                     errorList.add(error);
                 }
             }
-        } else if (typeCheckBranch(stmt.getFirstChild(),NonTerminator.Exp)) {
+        }
+        else if (typeCheckBranch(stmt.getFirstChild(),NonTerminator.Exp)) {
             calculatingTable = table;
             AddExp(stmt.childIterator(0).unwrap());
             calculatingTable = null;
@@ -539,6 +545,10 @@ public class SymbolTableBuilder {
                 }
             }
             midCodes.addAll(printCodes);
+        }
+        else if (typeCheckLeaf(stmt.getFirstLeafNode(),TokenTYPE.WHILETK)) {
+            Node cond = stmt.childIterator(2);
+            Cond(cond);
         }
     }
     
@@ -837,6 +847,82 @@ public class SymbolTableBuilder {
         }
     }
     
-//    private Cond() {   // 最底层就是AddExp,调用实现
-//    }
+    private void Cond(Node condNode) {
+        LOrExp(condNode.unwrap());
+    }
+    
+    private ExpItem RelExp(Node relNode) {
+        //RelExp → AddExp | RelExp ('<' | '>' | '<=' | '>=') AddExp
+        int i = 0;
+        if (typeCheckBranch(relNode.childIterator(i),NonTerminator.AddExp)) {
+            return AddExp(relNode.childIterator(i));
+        } else {
+            ExpItem x = RelExp(relNode.childIterator(i));
+            i++;
+            midOp op = relNode.childIterator(i).getFirstLeafNode().toOp();
+            i++;
+            ExpItem y = AddExp(relNode.childIterator(i));
+        
+            ExpItem z = new ExpItem(op,x,y,localNum);
+            localNum++;
+            midCodes.add(z.toMidCode());
+            return z;
+        }
+    }
+    
+    private ExpItem EqExp(Node eqNode) {
+        //EqExp → RelExp | EqExp ('==' | '!=') RelExp
+        int i = 0;
+        
+        if (typeCheckBranch(eqNode.childIterator(i),NonTerminator.RelExp)) {
+            return RelExp(eqNode.childIterator(i));
+        } else {
+            ExpItem x = EqExp(eqNode.childIterator(i));
+            i++;
+            midOp op = eqNode.childIterator(i).getFirstLeafNode().toOp();
+            i++;
+            ExpItem y = RelExp(eqNode.childIterator(i));
+        
+            ExpItem z = new ExpItem(op,x,y,localNum);
+            localNum++;
+            midCodes.add(z.toMidCode());
+            return z;
+        }
+    }
+    
+    private void LAndExp(Node lAndNode) {
+        //LAndExp → EqExp | LAndExp '&&' EqExp
+        int i = 0;
+
+        if (typeCheckBranch(lAndNode.childIterator(i),NonTerminator.EqExp)) {
+            ExpItem eqExp = EqExp(lAndNode.childIterator(i));
+            MidCode midCode = new MidCode(midOp.BEQZ,eqExp.getStr(),"NUM_Next||");
+            midCodes.add(midCode);
+        } else {
+            LAndExp(lAndNode.childIterator(i));
+            i = i + 2;
+            
+            ExpItem eqExp = EqExp(lAndNode.childIterator(i));
+            MidCode midCode = new MidCode(midOp.BEQZ,eqExp.getStr(),"NUM_Next||");
+            midCodes.add(midCode);
+        }
+    }
+    
+    private void LOrExp(Node lOrNode) {
+        //LOrExp → LAndExp   |   LOrExp '||' LAndExp
+        int i = 0;
+        
+        if (typeCheckBranch(lOrNode.childIterator(i),NonTerminator.LAndExp)) {
+            LAndExp(lOrNode.childIterator(i));
+            MidCode midCode = new MidCode(midOp.GOTO,"end_cond");
+            midCodes.add(midCode);
+        } else {
+            LOrExp(lOrNode.childIterator(i));
+            i = i + 2;
+            
+            LAndExp(lOrNode.childIterator(i));
+            MidCode midCode = new MidCode(midOp.GOTO,"end_cond");
+            midCodes.add(midCode);
+        }
+    }
 }

@@ -85,6 +85,18 @@ public class MidCode {
                 return z + " = " + x + " / " + y;
             case MODOP:
                 return z + " = " + x + " % " + y;
+            case LSSOP:
+                return z + " = " + x + " < " + y;
+            case LEQOP:
+                return z + " = " + x + " <= " + y;
+            case GREOP:
+                return z + " = " + x + " > " + y;
+            case GEQOP:
+                return z + " = " + x + " >= " + y;
+            case EQLOP:
+                return z + " = " + x + " == " + y;
+            case NEQOP:
+                return z + " = " + x + " != " + y;
             case PUSH:
                 return "push " + z;  // todo 实参数组
             case RETVALUE:
@@ -120,6 +132,14 @@ public class MidCode {
                 } else {
                     return "array " + z + "[" + x + "]" + "[" + y + "]";
                 }
+    
+            case BEQZ:
+                return "beqz " + z + " , " + x;
+            case GOTO:
+                return "goto " + z;
+                
+                
+                
             default:
                 return null;
         }

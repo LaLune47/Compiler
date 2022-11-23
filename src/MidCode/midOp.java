@@ -34,11 +34,14 @@ public enum midOp {
     EXIT,  //退出 main最后
     FUNC_BLOCK, //标号,区分不同作用域和标号
     
-    GOTO,  //无条件跳转
-    Jump,  //跳转标记
-    BZ,    //不满足条件跳转
-    BNZ,   //满足条件跳转
+    //GOTO,  //无条件跳转
+    //Jump,  //跳转标记
+    //BZ,    //不满足条件跳转
+    //BNZ,   //满足条件跳转
 
+    BEQZ,   //如果等于0，跳转
+    GOTO,   //无条件跳转
+ 
     GetARRAY,  //取数组的值  t = a[]
     AssignARRAY,  //给数组赋值  a[] = t
     
