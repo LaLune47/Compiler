@@ -37,12 +37,12 @@ public class Compiler {
                 return ((MyError) o1).getLine() - ((MyError) o2).getLine();
             }
         });
-        //PrintStream ps = new PrintStream(Config.errorPath);
-        //System.setOut(ps);
+        PrintStream ps = new PrintStream(Config.errorPath);
+        System.setOut(ps);
         for (MyError error: errorList) {
             System.out.println(error.toString());
         }
-        //ps.close();
+        ps.close();
         
         ArrayList<MidCode> midCodes = symbolTableBuilder.getMidCodes();
         HashMap<String,String> conStrings = symbolTableBuilder.getConStrings();

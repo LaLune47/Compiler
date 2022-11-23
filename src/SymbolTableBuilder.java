@@ -395,7 +395,7 @@ public class SymbolTableBuilder {
             midCode.setZ(ident.getValue());
         }
         
-        if (children.size() == 2) {   // todo 函数形参,数组
+        if (children.size() == 2) {
             item.setDimension(0);
             midCode.setX("0");
         } else if (children.size() == 4) {
@@ -723,7 +723,6 @@ public class SymbolTableBuilder {
             return z;
         } else { // ident '(' [FuncRParams] ')'
             // FuncRParams → Exp { ',' Exp }
-            // todo 函数调用,参数类型不一致
             
             LeafNode ident = unaryNode.getFirstLeafNode();
             undefineError(ident.getToken(),calculatingTable,true);

@@ -120,8 +120,8 @@ public class SymbolTable {
     
     public Integer getArrayValue2(String ident,Integer i,Integer j) {
         SingleItem item = findItem(ident);
-        if (item != null) {
-            return item.getDimension();
+        if (item.getDimension() == 2) {
+            return item.getArrayValue2(i,j);
         } else {
             return 0;
         }
@@ -138,7 +138,7 @@ public class SymbolTable {
     
     public Integer findItem_dimension(String ident) {
         SingleItem item = findItem(ident);
-        if (item!= null) {
+        if (item != null) {
             return item.getDimension();
         } else {
             return 1111;   //可能会引起错误处理的一些问题，但是按道理题目限制了不会一个东西上出现两个错误，偷点小懒
