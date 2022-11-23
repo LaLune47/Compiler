@@ -41,6 +41,7 @@ public enum midOp {
 
     BEQZ,   //如果等于0，跳转
     GOTO,   //无条件跳转
+    LABEL,  // 标签
  
     GetARRAY,  //取数组的值  t = a[]
     AssignARRAY,  //给数组赋值  a[] = t

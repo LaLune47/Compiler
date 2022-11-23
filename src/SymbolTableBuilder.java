@@ -35,8 +35,7 @@ public class SymbolTableBuilder {
     private SymbolTable calculatingTable = null; // 从addExp、Cond、CalExp下去
     
     // cond:一些位置
-    private Integer nextOrBegin = 0;
-    private Integer endCond = 0;
+    private static Integer globalLabelNum = 0;
     
     public SymbolTableBuilder(Node ast,ArrayList<MyError> errorList) {
         this.ast = ast;
@@ -548,7 +547,19 @@ public class SymbolTableBuilder {
         }
         else if (typeCheckLeaf(stmt.getFirstLeafNode(),TokenTYPE.WHILETK)) {
             Node cond = stmt.childIterator(2);
+            Integer falseNum = globalLabelNum + 1;
             Cond(cond);
+            Integer trueNum = globalLabelNum;
+            
+            midCodes.add(new MidCode(midOp.LABEL,trueNum.toString()));
+            /*
+                这里写条件正确的内容
+            */
+            
+            midCodes.add(new MidCode(midOp.LABEL,falseNum.toString()));
+            /*
+                这里写条件错误的内容
+            */
         }
     }
     
@@ -848,7 +859,7 @@ public class SymbolTableBuilder {
     }
     
     private void Cond(Node condNode) {
-        LOrExp(condNode.unwrap());
+        LOrExp(condNode.unwrap(),globalLabelNum);
     }
     
     private ExpItem RelExp(Node relNode) {
@@ -890,39 +901,35 @@ public class SymbolTableBuilder {
         }
     }
     
-    private void LAndExp(Node lAndNode) {
+    private void LAndExp(Node lAndNode,Integer orNum) {
         //LAndExp → EqExp | LAndExp '&&' EqExp
-        int i = 0;
-
-        if (typeCheckBranch(lAndNode.childIterator(i),NonTerminator.EqExp)) {
-            ExpItem eqExp = EqExp(lAndNode.childIterator(i));
-            MidCode midCode = new MidCode(midOp.BEQZ,eqExp.getStr(),"NUM_Next||");
-            midCodes.add(midCode);
+        if (typeCheckBranch(lAndNode.childIterator(0),NonTerminator.EqExp)) {
+            ExpItem eqExp = EqExp(lAndNode.childIterator(0));
+            midCodes.add(new MidCode(midOp.BEQZ,eqExp.getStr(),orNum.toString()));
         } else {
-            LAndExp(lAndNode.childIterator(i));
-            i = i + 2;
+            LAndExp(lAndNode.childIterator(0),orNum);
             
-            ExpItem eqExp = EqExp(lAndNode.childIterator(i));
-            MidCode midCode = new MidCode(midOp.BEQZ,eqExp.getStr(),"NUM_Next||");
-            midCodes.add(midCode);
+            ExpItem eqExp = EqExp(lAndNode.childIterator(2));
+            midCodes.add(new MidCode(midOp.BEQZ,eqExp.getStr(),orNum.toString()));
         }
     }
     
-    private void LOrExp(Node lOrNode) {
+    private void LOrExp(Node lOrNode,Integer orNum) {
         //LOrExp → LAndExp   |   LOrExp '||' LAndExp
-        int i = 0;
+        orNum++;
         
-        if (typeCheckBranch(lOrNode.childIterator(i),NonTerminator.LAndExp)) {
-            LAndExp(lOrNode.childIterator(i));
-            MidCode midCode = new MidCode(midOp.GOTO,"end_cond");
-            midCodes.add(midCode);
+        if (typeCheckBranch(lOrNode.childIterator(0),NonTerminator.LAndExp)) {
+            LAndExp(lOrNode.childIterator(0),orNum);
+            globalLabelNum = orNum + 1;
+            midCodes.add(new MidCode(midOp.GOTO,globalLabelNum.toString()));
         } else {
-            LOrExp(lOrNode.childIterator(i));
-            i = i + 2;
+            LOrExp(lOrNode.childIterator(0),orNum);
+    
+            Integer labelNum = orNum + 1;
+            midCodes.add(new MidCode(midOp.LABEL,labelNum.toString()));
             
-            LAndExp(lOrNode.childIterator(i));
-            MidCode midCode = new MidCode(midOp.GOTO,"end_cond");
-            midCodes.add(midCode);
+            LAndExp(lOrNode.childIterator(2),orNum);
+            midCodes.add(new MidCode(midOp.GOTO,globalLabelNum.toString()));
         }
     }
 }

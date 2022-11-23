@@ -134,11 +134,11 @@ public class MidCode {
                 }
     
             case BEQZ:
-                return "beqz " + z + " , " + x;
+                return "    beqz " + z + " , " + x; //短路，确定当前and表达式为false，(跳到||后的下一个条件表达式计算)
             case GOTO:
-                return "goto " + z;
-                
-                
+                return "    goto " + z;    //短路，确定cond表达式为true
+            case LABEL:
+                return "\n====="+z + ":\n";
                 
             default:
                 return null;
