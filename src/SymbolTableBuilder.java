@@ -554,7 +554,9 @@ public class SymbolTableBuilder {
             Node cond = stmt.childIterator(2);
             Integer falseNum = globalLabelNum + 1;
             Integer endNum = falseNum;
+            calculatingTable = table;
             Cond(cond);
+            calculatingTable = null;
             Integer trueNum = globalLabelNum;
     
             //循环条件满足，执行：
@@ -577,7 +579,9 @@ public class SymbolTableBuilder {
             // 'if' '(' Cond ')' Stmt [ 'else' Stmt ]
             Node cond = stmt.childIterator(2);
             Integer falseNum = globalLabelNum + 1;
+            calculatingTable = table;
             Cond(cond);
+            calculatingTable = null;
             Integer trueNum = globalLabelNum;
             
             Integer endNum = 0;
