@@ -36,6 +36,8 @@ public class SymbolTableBuilder {
     
     // cond:一些位置
     private static Integer globalLabelNum = 0;
+    private static Integer curStartNum = 0;
+    private static Integer curEndNum = 0;
     
     public SymbolTableBuilder(Node ast,ArrayList<MyError> errorList) {
         this.ast = ast;
@@ -549,11 +551,16 @@ public class SymbolTableBuilder {
             //循环开始，在条件判断之前
             Integer startNum = ++globalLabelNum;
             midCodes.add(new MidCode(midOp.LABEL,startNum.toString()));
+            Integer falseNum = globalLabelNum + 1;
+            Integer endNum = falseNum;
+            
+            Integer outStartNum = curStartNum;
+            curStartNum = startNum;
+            Integer outEndNum = curEndNum;
+            curEndNum = endNum;
             
             //循环条件判断，跳转
             Node cond = stmt.childIterator(2);
-            Integer falseNum = globalLabelNum + 1;
-            Integer endNum = falseNum;
             calculatingTable = table;
             Cond(cond);
             calculatingTable = null;
@@ -566,7 +573,6 @@ public class SymbolTableBuilder {
             midCodes.add(new MidCode(midOp.BLOCK,curNum.toString(),"start"));
             blockNum++;
             SymbolTable subTable = parseBlock(block,depth + 1,table,false,null);
-            // todo:循环特殊在，还有break和continue，再包一层parseWhileBlock，传入start和end(或者用全局变量也行)
             midCodes.add(new MidCode(midOp.BLOCK,curNum.toString(),"end"));
             table.addChild(subTable);
             //再次条件判断
@@ -574,6 +580,15 @@ public class SymbolTableBuilder {
             
             // 循环条件不满足，执行： （此语句结束后面没有内容）
             midCodes.add(new MidCode(midOp.LABEL,falseNum.toString()));
+            
+            curStartNum = outStartNum;
+            curEndNum = outEndNum;
+        }
+        else if(typeCheckLeaf(stmt.getFirstLeafNode(),TokenTYPE.BREAKTK)) {
+            midCodes.add(new MidCode(midOp.GOTO,curEndNum.toString()));
+        }
+        else if(typeCheckLeaf(stmt.getFirstLeafNode(),TokenTYPE.CONTINUETK)) {
+            midCodes.add(new MidCode(midOp.GOTO,curStartNum.toString()));
         }
         else if(typeCheckLeaf(stmt.getFirstLeafNode(),TokenTYPE.IFTK)) {
             // 'if' '(' Cond ')' Stmt [ 'else' Stmt ]
