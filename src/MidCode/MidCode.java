@@ -85,6 +85,8 @@ public class MidCode {
                 return z + " = " + x + " / " + y;
             case MODOP:
                 return z + " = " + x + " % " + y;
+                
+                //todo 六个比较函数，cond
             case LSSOP:
                 return z + " = " + x + " < " + y;
             case LEQOP:
@@ -97,6 +99,7 @@ public class MidCode {
                 return z + " = " + x + " == " + y;
             case NEQOP:
                 return z + " = " + x + " != " + y;
+                
             case PUSH:
                 return "push " + z;  // todo 实参数组
             case RETVALUE:
@@ -114,9 +117,10 @@ public class MidCode {
                 return "scan " + z;
             case ASSIGNOP:
                 return z + " = " + x;
+                
+                // todo 数组相关
             case AssignARRAY:
                 return z + "[" + x + "]" + " = " + y;
-                
             case GetARRAY:
                 return z + " = " + x + "[" + y + "]";
                 
@@ -126,6 +130,8 @@ public class MidCode {
                 return "print \"" + z + "\"";
             case PRINTEXP:   //写变量
                 return "print " + z;
+                
+                // todo 数组定义，三个跳转
             case ARRAY:
                 if (y == null) {
                     return "array " + z + "[" + x + "]";
@@ -138,7 +144,7 @@ public class MidCode {
             case GOTO:
                 return "    goto " + z;    //短路，确定cond表达式为true
             case LABEL:
-                return "\n====="+z + ":\n";
+                return "\n=====" + z + ":\n";
                 
             default:
                 return null;

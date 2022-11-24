@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 // 语法分析 + 部分错误处理
-//- i,j,k,括号分号补全，记录错误 todo 可能存在更多的顺序问题
+//- i,j,k,括号分号补全，记录错误
 //- a,l处理printf和字符串的报错，记录错误
 //- m 循环块 报错
 public class AstBuilder {
@@ -328,7 +328,7 @@ public class AstBuilder {
         Node child1 = MulExp();
         curAddNode.addChild(child1);
     
-        while(curEqualTo(TokenTYPE.PLUS) || curEqualTo(TokenTYPE.MINU)) {
+        while (curEqualTo(TokenTYPE.PLUS) || curEqualTo(TokenTYPE.MINU)) {
             Node newAddNode = new BranchNode(NonTerminator.AddExp);
             newAddNode.addChild(curAddNode);
             addLeafChild(newAddNode);  // +|-
@@ -346,7 +346,7 @@ public class AstBuilder {
         Node child1 = UnaryExp();
         curMulNode.addChild(child1);
     
-        while(curEqualTo(TokenTYPE.MULT) || curEqualTo(TokenTYPE.DIV) || curEqualTo(TokenTYPE.MOD)) {
+        while (curEqualTo(TokenTYPE.MULT) || curEqualTo(TokenTYPE.DIV) || curEqualTo(TokenTYPE.MOD)) {
             Node newMulNode = new BranchNode(NonTerminator.MulExp);
             newMulNode.addChild(curMulNode);
             addLeafChild(newMulNode);  // */%
@@ -596,7 +596,6 @@ public class AstBuilder {
                 addLeafChild(currentNode);  // ';'
             }
         } else if (curEqualTo(TokenTYPE.PRINTFTK)) {
-            Token print = curToken();
             addLeafChild(currentNode);   // printf
             addLeafChild(currentNode);   // '('
             Integer paraNum1 = checkParaNum(curToken().getValue());
@@ -798,7 +797,7 @@ public class AstBuilder {
     
     private Integer checkParaNum(String str) {
         Integer num = 0;
-        for(int i = 0;i < str.length(); i++) {
+        for (int i = 0;i < str.length(); i++) {
             if (str.charAt(i) == '%' && i < str.length() - 1 && str.charAt(i + 1) == 'd') {
                 num++;
             }
@@ -816,7 +815,7 @@ public class AstBuilder {
         //<FormatChar> → %d
         //<NormalChar> → 十进制编码为32,33,40-126的ASCII字符，'\'（编码92）出现当且仅当为'\n'
         // 偷懒，多带了个后面的引号
-        for(int i = 0;i < str.length() - 1; i++) {
+        for (int i = 0;i < str.length() - 1; i++) {
             int c = str.charAt(i);
             if (c == 32 || c == 33 || c <= 91 && c >= 40 || c <= 126 && c >= 93) {
                 continue;

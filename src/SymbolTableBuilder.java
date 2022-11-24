@@ -429,15 +429,13 @@ public class SymbolTableBuilder {
     }
     
     private void Stmt(Node stmt,SymbolTable table,Integer depth){
-    /*  Stmt → // todo 中间代码生成后半部分,控制流部分
+    /*  Stmt →
         第一次: | Block
         第一次: | 'return' [Exp] ';' // f i
         第一次: | [Exp] ';'
         第一次: LVal '=' Exp ';'
         第一次: | LVal '=' 'getint''('')'';' // h i j
         第一次: | 'printf''('FormatString{,Exp}')'';' // i j l
-        
-        // todo 与block相关的定义范围的错误处理，还没搞定呢
         | 'if' '(' Cond ')' Stmt [ 'else' Stmt ]
         | 'while' '(' Cond ')' Stmt // j
         | 'break' ';' | 'continue' ';' // i m
@@ -806,7 +804,7 @@ public class SymbolTableBuilder {
                 }
             }
         } else if (typeCheckBranch(unaryNode.childIterator(0),NonTerminator.UnaryOp)) { // UnaryOp UnaryExp
-            //UnaryOp,  '+' | '−' | '!' '!'仅出现在条件表达式中  todo !补充实现，因为暂时没有条件表达式
+            //UnaryOp,  '+' | '−' | '!' '!'仅出现在条件表达式中
             ExpItem x = new ExpItem("intConst",0);
             midOp op = unaryNode.childIterator(0).getFirstLeafNode().toOp();
             ExpItem y = UnaryExp(unaryNode.childIterator(1));
@@ -827,7 +825,7 @@ public class SymbolTableBuilder {
                 funcRParams = unaryNode.childIterator(2);
                 while (i < funcRParams.getChildren().size()) {
                     ExpItem paraReal = AddExp(funcRParams.childIterator(i).unwrap());
-                    midCodes.add(new MidCode(midOp.PUSH,paraReal.getStr()));  // todo 数组地址，指针变量区分问题
+                    midCodes.add(new MidCode(midOp.PUSH,paraReal.getStr()));  // todo 形参：数组地址，指针变量区分问题
                     i += 2;
                     paraNum += 1;
                 }
