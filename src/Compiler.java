@@ -39,16 +39,16 @@ public class Compiler {
         });
         //PrintStream ps = new PrintStream(Config.errorPath);
         //System.setOut(ps);
-        //for (MyError error: errorList) {
-        //    System.out.println(error.toString());
-        //}
+        for (MyError error: errorList) {
+            System.out.println(error.toString());
+        }
         //ps.close();
         
         ArrayList<MidCode> midCodes = symbolTableBuilder.getMidCodes();
         HashMap<String,String> conStrings = symbolTableBuilder.getConStrings();
-        for (MidCode midCode: midCodes) {
-            System.out.println(midCode.toString());
-        }
+//        for (MidCode midCode: midCodes) {
+//            System.out.println(midCode.toString());
+//        }
         
         //PrintStream ps = new PrintStream(Config.mipsPath);
         //System.setOut(ps);

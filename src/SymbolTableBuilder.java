@@ -573,6 +573,46 @@ public class SymbolTableBuilder {
             // 循环条件不满足，执行： （此语句结束后面没有内容）
             midCodes.add(new MidCode(midOp.LABEL,falseNum.toString()));
         }
+        else if(typeCheckLeaf(stmt.getFirstLeafNode(),TokenTYPE.IFTK)) {
+            // 'if' '(' Cond ')' Stmt [ 'else' Stmt ]
+            Node cond = stmt.childIterator(2);
+            Integer falseNum = globalLabelNum + 1;
+            Cond(cond);
+            Integer trueNum = globalLabelNum;
+            
+            Integer endNum = 0;
+            if (stmt.getChildren() != null && stmt.getChildren().size() == 7) {
+                endNum = ++globalLabelNum;
+            } else {
+                endNum = falseNum;
+            }
+            
+            // 条件正确
+            midCodes.add(new MidCode(midOp.LABEL,trueNum.toString()));
+            Node block = stmt.childIterator(4).unwrap();
+            Integer curNum = blockNum;
+            midCodes.add(new MidCode(midOp.BLOCK,curNum.toString(),"start"));
+            blockNum++;
+            SymbolTable subTable = parseBlock(block,depth + 1,table,false,null);
+            midCodes.add(new MidCode(midOp.BLOCK,curNum.toString(),"end"));
+            table.addChild(subTable);
+            
+            midCodes.add(new MidCode(midOp.GOTO,endNum.toString()));
+    
+            // 有else，条件错误
+            if (stmt.getChildren() != null && stmt.getChildren().size() == 7) {
+                midCodes.add(new MidCode(midOp.LABEL,falseNum.toString()));
+                Node block2 = stmt.childIterator(6).unwrap();
+                Integer curNum2 = blockNum;
+                midCodes.add(new MidCode(midOp.BLOCK,curNum2.toString(),"start"));
+                blockNum++;
+                SymbolTable subTable2 = parseBlock(block2,depth + 1,table,false,null);
+                midCodes.add(new MidCode(midOp.BLOCK,curNum2.toString(),"end"));
+                table.addChild(subTable2);
+            }
+            
+            midCodes.add(new MidCode(midOp.LABEL,endNum.toString()));
+        }
     }
     
     private boolean judge_d(String str,Integer index) {
@@ -584,7 +624,8 @@ public class SymbolTableBuilder {
     
     private void undefineError(Token token,SymbolTable table,Boolean isFunc) {
         String ident = token.getValue();
-        if (!isFunc && table.findItem(ident) == null || isFunc && table.findFunc(ident) == null) {
+        if (!isFunc && table != null && table.findItem(ident) == null ||
+                isFunc && table != null && table.findFunc(ident) == null) {
             MyError error = new MyError(ErrorTYPE.Undefine_c);
             error.setLine(token.getLine());
             errorList.add(error);
