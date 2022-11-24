@@ -33,11 +33,6 @@ public enum midOp {
     MAIN,   //主函数进入入口
     EXIT,  //退出 main最后
     BLOCK, //标号,区分不同作用域和标号
-    
-    //GOTO,  //无条件跳转
-    //Jump,  //跳转标记
-    //BZ,    //不满足条件跳转
-    //BNZ,   //满足条件跳转
 
     BEQZ,   //如果等于0，跳转
     GOTO,   //无条件跳转

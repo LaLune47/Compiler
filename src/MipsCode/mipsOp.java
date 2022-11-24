@@ -24,4 +24,12 @@ public enum mipsOp {
     move,
     jal,
     nop,
+    
+    beqz,
+    slt, // LSSOP, <
+    sle, // LEQOP, <=
+    sgt, // GREOP, >
+    sge, // GEQOP, >=
+    seq, // EQLOP, ==
+    sne, // NEQOP, !=
 }

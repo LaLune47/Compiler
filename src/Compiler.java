@@ -46,14 +46,14 @@ public class Compiler {
         
         ArrayList<MidCode> midCodes = symbolTableBuilder.getMidCodes();
         HashMap<String,String> conStrings = symbolTableBuilder.getConStrings();
-        for (MidCode midCode: midCodes) {
-            System.out.println(midCode.toString());
-        }
+        //for (MidCode midCode: midCodes) {
+        //    System.out.println(midCode.toString());
+        //}
         
-        //PrintStream ps = new PrintStream(Config.mipsPath);
-        //System.setOut(ps);
-        //MipsGenerator mipsGenerator = new MipsGenerator(midCodes,conStrings);  // mips代码生成
-        //mipsGenerator.printMips();
-        //ps.close();
+        PrintStream ps = new PrintStream(Config.mipsPath);
+        System.setOut(ps);
+        MipsGenerator mipsGenerator = new MipsGenerator(midCodes,conStrings);  // mips代码生成
+        mipsGenerator.printMips();
+        ps.close();
     }
 }

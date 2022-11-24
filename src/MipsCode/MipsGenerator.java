@@ -278,6 +278,55 @@ public class MipsGenerator {
                     finalCodes.add(new FinalCode(mipsOp.move,"$fp", "$sp"));
                     finalCodes.add(new FinalCode(mipsOp.addi,"$sp","$sp","",-4*lenMain));
                     break;
+                    
+                case BEQZ:
+                    loadValue(midCode.z, "$t0");
+                    finalCodes.add(new FinalCode(mipsOp.beqz,"$t0","label__" + midCode.x));
+                    break;
+                case GOTO:
+                    finalCodes.add(new FinalCode(mipsOp.j,"label__" + midCode.z));
+                    break;
+                case LABEL:
+                    finalCodes.add(new FinalCode(mipsOp.label,"label__" + midCode.z));
+                    break;
+                    
+                case LSSOP:
+                    loadValue(midCode.x, "$t0");
+                    loadValue(midCode.y, "$t1");
+                    finalCodes.add(new FinalCode(mipsOp.slt,"$t2","$t0","$t1"));
+                    storeValue(midCode.z,"$t2",true);
+                    break;
+                case LEQOP:
+                    loadValue(midCode.x, "$t0");
+                    loadValue(midCode.y, "$t1");
+                    finalCodes.add(new FinalCode(mipsOp.sle,"$t2","$t0","$t1"));
+                    storeValue(midCode.z,"$t2",true);
+                    break;
+                case GREOP:
+                    loadValue(midCode.x, "$t0");
+                    loadValue(midCode.y, "$t1");
+                    finalCodes.add(new FinalCode(mipsOp.sgt,"$t2","$t0","$t1"));
+                    storeValue(midCode.z,"$t2",true);
+                    break;
+                case GEQOP:
+                    loadValue(midCode.x, "$t0");
+                    loadValue(midCode.y, "$t1");
+                    finalCodes.add(new FinalCode(mipsOp.sge,"$t2","$t0","$t1"));
+                    storeValue(midCode.z,"$t2",true);
+                    break;
+                case EQLOP:
+                    loadValue(midCode.x, "$t0");
+                    loadValue(midCode.y, "$t1");
+                    finalCodes.add(new FinalCode(mipsOp.seq,"$t2","$t0","$t1"));
+                    storeValue(midCode.z,"$t2",true);
+                    break;
+                case NEQOP:
+                    loadValue(midCode.x, "$t0");
+                    loadValue(midCode.y, "$t1");
+                    finalCodes.add(new FinalCode(mipsOp.sne,"$t2","$t0","$t1"));
+                    storeValue(midCode.z,"$t2",true);
+                    break;
+                    
                 case EXIT:
                 default:
                     break;
@@ -341,7 +390,7 @@ public class MipsGenerator {
                     System.out.println("j " + code.z);
                     break;
                 case label:
-                    System.out.println(code.z+":");
+                    System.out.println("\n" + code.z+":");
                     break;
                 case jr:
                     System.out.println("jr " + code.z);
@@ -358,6 +407,29 @@ public class MipsGenerator {
                 case nop:
                     System.out.println("nop");
                     break;
+                    
+                case beqz:
+                    System.out.println("beqz " + code.z + "," + code.x);
+                    break;
+                case slt:
+                    System.out.println("slt " + code.z + "," + code.x + "," + code.y);
+                    break;
+                case sle:
+                    System.out.println("sle " + code.z + "," + code.x + "," + code.y);
+                    break;
+                case sgt:
+                    System.out.println("sgt " + code.z + "," + code.x + "," + code.y);
+                    break;
+                case sge:
+                    System.out.println("sge " + code.z + "," + code.x + "," + code.y);
+                    break;
+                case seq:
+                    System.out.println("seq " + code.z + "," + code.x + "," + code.y);
+                    break;
+                case sne:
+                    System.out.println("sne " + code.z + "," + code.x + "," + code.y);
+                    break;
+                    
                 default:
                     break;
             }
