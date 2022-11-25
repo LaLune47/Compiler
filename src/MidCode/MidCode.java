@@ -99,6 +99,8 @@ public class MidCode {
                 return z + " = " + x + " == " + y;
             case NEQOP:
                 return z + " = " + x + " != " + y;
+            case NOTOP:
+                return z + " = " + " !" + y;
                 
             case PUSH:
                 return "push " + z;  // todo 实参数组

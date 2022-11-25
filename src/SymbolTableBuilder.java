@@ -566,7 +566,7 @@ public class SymbolTableBuilder {
     
             //循环条件满足，执行：
             midCodes.add(new MidCode(midOp.LABEL,trueNum.toString()));
-            Node block = stmt.childIterator(4).unwrap();
+            Node block = rePackage(stmt.childIterator(4));
             Integer curNum = blockNum;
             midCodes.add(new MidCode(midOp.BLOCK,curNum.toString(),"start"));
             blockNum++;
@@ -606,7 +606,7 @@ public class SymbolTableBuilder {
             
             // 条件正确
             midCodes.add(new MidCode(midOp.LABEL,trueNum.toString()));
-            Node block = stmt.childIterator(4).unwrap();
+            Node block = rePackage(stmt.childIterator(4));
             Integer curNum = blockNum;
             midCodes.add(new MidCode(midOp.BLOCK,curNum.toString(),"start"));
             blockNum++;
@@ -618,18 +618,32 @@ public class SymbolTableBuilder {
     
             // 有else，条件错误
             if (stmt.getChildren() != null && stmt.getChildren().size() == 7) {
-                midCodes.add(new MidCode(midOp.LABEL,falseNum.toString()));
-                Node block2 = stmt.childIterator(6).unwrap();
+                midCodes.add(new MidCode(midOp.LABEL, falseNum.toString()));
+                Node block2 = rePackage(stmt.childIterator(6));
                 Integer curNum2 = blockNum;
-                midCodes.add(new MidCode(midOp.BLOCK,curNum2.toString(),"start"));
+                midCodes.add(new MidCode(midOp.BLOCK, curNum2.toString(), "start"));
                 blockNum++;
-                SymbolTable subTable2 = parseBlock(block2,depth + 1,table,false,null);
-                midCodes.add(new MidCode(midOp.BLOCK,curNum2.toString(),"end"));
+                SymbolTable subTable2 = parseBlock(block2, depth + 1, table, false, null);
+                midCodes.add(new MidCode(midOp.BLOCK, curNum2.toString(), "end"));
                 table.addChild(subTable2);
             }
-            
             midCodes.add(new MidCode(midOp.LABEL,endNum.toString()));
         }
+    }
+    
+    public Node rePackage(Node stmt) {
+        //Block,     // 语句块  '{' { BlockItem } '}'
+        //BlockItem, // （不输出）语句块项   Decl | Stmt
+        if (stmt.unwrap()!=null && typeCheckBranch(stmt.unwrap(),NonTerminator.Block)) {
+            return stmt.unwrap();
+        }
+        Node blockItem = new BranchNode(NonTerminator.BlockItem);
+        blockItem.addChild(stmt);
+        Node block = new BranchNode(NonTerminator.Block);
+        block.addChild(new LeafNode(new Token(0,TokenTYPE.LBRACE,"{")));
+        block.addChild(blockItem);
+        block.addChild(new LeafNode(new Token(0,TokenTYPE.RBRACE,"}")));
+        return block;
     }
     
     private boolean judge_d(String str,Integer index) {
@@ -775,7 +789,7 @@ public class SymbolTableBuilder {
     }
     
     private ExpItem UnaryExp(Node unaryNode) {
-        if (typeCheckBranch(unaryNode.childIterator(0),NonTerminator.PrimaryExp)) { //  PrimaryExp
+        if (typeCheckBranch(unaryNode.childIterator(0),NonTerminator.PrimaryExp)) {
             // '(' Exp ')' | LVal | Number
             Node primaryExp = unaryNode.childIterator(0);
             if (primaryExp.childIterator(0) instanceof LeafNode) {

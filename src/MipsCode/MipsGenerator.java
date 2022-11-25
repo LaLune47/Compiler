@@ -143,7 +143,11 @@ public class MipsGenerator {
                     break;
                 case ASSIGNOP:
                     loadValue(midCode.x,"$t0");
-                    storeValue(midCode.z,"$t0",true);  // 直接把所有中间代码里的中间变量都当作变量
+                    if (midCode.z.length() >=2 && midCode.z.charAt(0) == 't' && midCode.z.charAt(1) == '&') {
+                        storeValue(midCode.z,"$t0",true);  // 零食变量，没出现过
+                    } else {
+                        storeValue(midCode.z,"$t0",false);
+                    }
                     break;
                 case PLUSOP:
                     loadValue(midCode.x, "$t0");
@@ -289,7 +293,13 @@ public class MipsGenerator {
                 case LABEL:
                     finalCodes.add(new FinalCode(mipsOp.label,"label__" + midCode.z));
                     break;
-                    
+                  
+                    // 因为都是条件产生的新式子所以都是新的没错
+                case NOTOP:
+                    loadValue(midCode.y, "$t0");
+                    finalCodes.add(new FinalCode(mipsOp.nor,"$t1","$t0","$0"));
+                    storeValue(midCode.z,"$t1",true);
+                    break;
                 case LSSOP:
                     loadValue(midCode.x, "$t0");
                     loadValue(midCode.y, "$t1");
@@ -428,6 +438,9 @@ public class MipsGenerator {
                     break;
                 case sne:
                     System.out.println("sne " + code.z + "," + code.x + "," + code.y);
+                    break;
+                case nor:
+                    System.out.println("nor " + code.z + "," + code.x + "," + code.y);
                     break;
                     
                 default:

@@ -98,6 +98,8 @@ public class LeafNode implements Node {
                 return midOp.DIVOP;
             case MOD:
                 return midOp.MODOP;
+            case NOT:
+                return midOp.NOTOP;
             case LSS:
                 return midOp.LSSOP; // <
             case LEQ:
