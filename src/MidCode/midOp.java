@@ -7,7 +7,6 @@ public enum midOp {
     DIVOP,  // /
     MODOP,  // %
     
-    NOTOP,
     LSSOP,  //<
     LEQOP,  //<=
     GREOP,  //>

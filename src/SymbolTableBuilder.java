@@ -907,10 +907,10 @@ public class SymbolTableBuilder {
                         return CalConst(curNode.unwrap(),table);
                     } else {  //+-UnaryExp
                         Integer a = CalConst(curNode.childIterator(1),table);
-                        Node op = curNode.childIterator(0);
-                        if (typeCheckLeaf(op,TokenTYPE.PLUS)) {
+                        Node unaryOp = curNode.childIterator(0);
+                        if (typeCheckLeaf(unaryOp.unwrap(),TokenTYPE.PLUS)) {
                             return a;
-                        } else if (typeCheckLeaf(op,TokenTYPE.MINU)) {
+                        } else if (typeCheckLeaf(unaryOp.unwrap(),TokenTYPE.MINU)) {
                             return -a;
                         }
                     }

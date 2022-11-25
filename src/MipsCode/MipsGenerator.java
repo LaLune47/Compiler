@@ -19,6 +19,8 @@ public class MipsGenerator {
     private ArrayList<MidCode> paraRs;
     private String curFunc;
     private HashMap<String,Integer> funcLength = new HashMap<>();
+    private ArrayList<String> blockStack = new ArrayList<>();
+    private String funcBlockStr = null;
     
     public MipsGenerator(ArrayList<MidCode> midCodes,HashMap<String,String> conStrings) {
         this.midCodes = midCodes;
@@ -115,6 +117,14 @@ public class MipsGenerator {
         item.setTable(curTable);
     }
     
+    private boolean isTemp(String str) {
+        if (str.length() >=2 && str.charAt(0) == 't' && str.charAt(1) == '&') {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
     private void genMips() {
         // 数据区  字符串常量+ todo 数组
         finalCodes.add(new FinalCode(mipsOp.data));
@@ -127,7 +137,9 @@ public class MipsGenerator {
         // 全局变量分配 + 函数分配 + main函数
         
         finalCodes.add(new FinalCode(mipsOp.text));
-        for (MidCode midCode:midCodes) {
+        for (Integer i = 0;i < midCodes.size();i++) {
+            MidCode midCode = midCodes.get(i);
+            
             switch (midCode.op) {
                 case VAR:
                     if (midCode.x != null) {
@@ -143,25 +155,21 @@ public class MipsGenerator {
                     break;
                 case ASSIGNOP:
                     loadValue(midCode.x,"$t0");
-                    if (midCode.z.length() >=2 && midCode.z.charAt(0) == 't' && midCode.z.charAt(1) == '&') {
-                        storeValue(midCode.z,"$t0",true);  // 零食变量，没出现过
-                    } else {
-                        storeValue(midCode.z,"$t0",false);
-                    }
+                    storeValue(midCode.z,"$t0",isTemp(midCode.z));
                     break;
                 case PLUSOP:
                     loadValue(midCode.x, "$t0");
                     loadValue(midCode.y, "$t1");
                     finalCodes.add(new FinalCode(mipsOp.add,"$t2","$t0","$t1"));
                     finalCodes.add(new FinalCode(mipsOp.debug,"------plus"));
-                    storeValue(midCode.z,"$t2",true);
+                    storeValue(midCode.z,"$t2",isTemp(midCode.z));
                     break;
                 case MINUOP:
                     loadValue(midCode.x, "$t0");
                     loadValue(midCode.y, "$t1");
                     finalCodes.add(new FinalCode(mipsOp.sub,"$t2","$t0","$t1"));
                     finalCodes.add(new FinalCode(mipsOp.debug,"------minu"));
-                    storeValue(midCode.z,"$t2",true);
+                    storeValue(midCode.z,"$t2",isTemp(midCode.z));
                     break;
                 case MULTOP:
                     loadValue(midCode.x, "$t0");
@@ -169,7 +177,7 @@ public class MipsGenerator {
                     finalCodes.add(new FinalCode(mipsOp.mult,"$t0","$t1"));
                     finalCodes.add(new FinalCode(mipsOp.mflo,"$t2"));
                     finalCodes.add(new FinalCode(mipsOp.debug,"------mul"));
-                    storeValue(midCode.z,"$t2",true);
+                    storeValue(midCode.z,"$t2",isTemp(midCode.z));
                     break;
                 case DIVOP:
                     loadValue(midCode.x, "$t0");
@@ -177,7 +185,7 @@ public class MipsGenerator {
                     finalCodes.add(new FinalCode(mipsOp.div,"$t0","$t1"));
                     finalCodes.add(new FinalCode(mipsOp.mflo,"$t2"));
                     finalCodes.add(new FinalCode(mipsOp.debug,"------div"));
-                    storeValue(midCode.z,"$t2",true);
+                    storeValue(midCode.z,"$t2",isTemp(midCode.z));
                     break;
                 case MODOP:
                     loadValue(midCode.x, "$t0");
@@ -185,12 +193,12 @@ public class MipsGenerator {
                     finalCodes.add(new FinalCode(mipsOp.div,"$t0","$t1"));
                     finalCodes.add(new FinalCode(mipsOp.mfhi,"$t2"));
                     finalCodes.add(new FinalCode(mipsOp.debug,"------mod"));
-                    storeValue(midCode.z,"$t2",true);
+                    storeValue(midCode.z,"$t2",isTemp(midCode.z));
                     break;
                 case SCAN:
                     finalCodes.add(new FinalCode(mipsOp.li,"$v0","","",5));
                     finalCodes.add(new FinalCode(mipsOp.syscall));
-                    storeValue(midCode.z,"$v0",true);
+                    storeValue(midCode.z,"$v0",isTemp(midCode.z));
                     break;
                 case PRINTSTR:
                     finalCodes.add(new FinalCode(mipsOp.la,"$a0",conStrings.get(midCode.z)));
@@ -205,10 +213,16 @@ public class MipsGenerator {
                 case BLOCK:
                     if (midCode.x.equals("start")) {
                         curTable = new IntegerTable(curTable);
+                        blockStack.add(midCode.z);
                     } else {
                         curTable = curTable.getParent();
-                        funcLength.put(curFunc,itemNum + 5);  // 防止出意外？多留一点？todo 可能会因为数组出现变化
-                        curFunc = null;
+                        int index = blockStack.size() - 1;
+                        String str = blockStack.remove(index);
+                        if (str.equals(funcBlockStr)) {
+                            funcLength.put(curFunc,itemNum + 5);  // 防止出意外？多留一点？todo 可能会因为数组出现变化
+                            curFunc = null;
+                            funcBlockStr = null;
+                        }
                         finalCodes.add(new FinalCode(mipsOp.space));
                     }
                     break;
@@ -221,6 +235,9 @@ public class MipsGenerator {
                     finalCodes.add(new FinalCode(mipsOp.label,midCode.z));
                     curFunc = midCode.z;
                     itemNum = 0;
+                    if (i >= 1 && midCodes.get(i - 1) != null) {
+                        funcBlockStr = midCodes.get(i - 1).z;
+                    }
                     break;
                 case PARA: // 跟var类似   // todo 数组
                     define(midCode.z);
@@ -241,11 +258,11 @@ public class MipsGenerator {
                     break;
                 case CALL:
                     // 传入形参
-                    int i = 0;
+                    int j = 0;
                     for (MidCode paraR:paraRs) {
                         loadValue(paraR.z,"$t0");
-                        finalCodes.add(new FinalCode(mipsOp.sw, "$t0", "$sp", "", -4 * i));
-                        i++;
+                        finalCodes.add(new FinalCode(mipsOp.sw, "$t0", "$sp", "", -4 * j));
+                        j++;
                     }
                     paraRs.clear();
                     
@@ -266,7 +283,7 @@ public class MipsGenerator {
                     
                     break;
                 case RETVALUE:
-                    storeValue(midCode.z,"$v0",true);
+                    storeValue(midCode.z,"$v0",isTemp(midCode.z));
                     break;
                     
                 case MAIN:
@@ -293,48 +310,42 @@ public class MipsGenerator {
                 case LABEL:
                     finalCodes.add(new FinalCode(mipsOp.label,"label__" + midCode.z));
                     break;
-                  
-                    // 因为都是条件产生的新式子所以都是新的没错
-                case NOTOP:
-                    loadValue(midCode.y, "$t0");
-                    finalCodes.add(new FinalCode(mipsOp.nor,"$t1","$t0","$0"));
-                    storeValue(midCode.z,"$t1",true);
-                    break;
+                    
                 case LSSOP:
                     loadValue(midCode.x, "$t0");
                     loadValue(midCode.y, "$t1");
                     finalCodes.add(new FinalCode(mipsOp.slt,"$t2","$t0","$t1"));
-                    storeValue(midCode.z,"$t2",true);
+                    storeValue(midCode.z,"$t2",isTemp(midCode.z));
                     break;
                 case LEQOP:
                     loadValue(midCode.x, "$t0");
                     loadValue(midCode.y, "$t1");
                     finalCodes.add(new FinalCode(mipsOp.sle,"$t2","$t0","$t1"));
-                    storeValue(midCode.z,"$t2",true);
+                    storeValue(midCode.z,"$t2",isTemp(midCode.z));
                     break;
                 case GREOP:
                     loadValue(midCode.x, "$t0");
                     loadValue(midCode.y, "$t1");
                     finalCodes.add(new FinalCode(mipsOp.sgt,"$t2","$t0","$t1"));
-                    storeValue(midCode.z,"$t2",true);
+                    storeValue(midCode.z,"$t2",isTemp(midCode.z));
                     break;
                 case GEQOP:
                     loadValue(midCode.x, "$t0");
                     loadValue(midCode.y, "$t1");
                     finalCodes.add(new FinalCode(mipsOp.sge,"$t2","$t0","$t1"));
-                    storeValue(midCode.z,"$t2",true);
+                    storeValue(midCode.z,"$t2",isTemp(midCode.z));
                     break;
                 case EQLOP:
                     loadValue(midCode.x, "$t0");
                     loadValue(midCode.y, "$t1");
                     finalCodes.add(new FinalCode(mipsOp.seq,"$t2","$t0","$t1"));
-                    storeValue(midCode.z,"$t2",true);
+                    storeValue(midCode.z,"$t2",isTemp(midCode.z));
                     break;
                 case NEQOP:
                     loadValue(midCode.x, "$t0");
                     loadValue(midCode.y, "$t1");
                     finalCodes.add(new FinalCode(mipsOp.sne,"$t2","$t0","$t1"));
-                    storeValue(midCode.z,"$t2",true);
+                    storeValue(midCode.z,"$t2",isTemp(midCode.z));
                     break;
                     
                 case EXIT:
