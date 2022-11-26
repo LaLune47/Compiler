@@ -134,8 +134,62 @@ public class MipsGenerator {
         
         finalCodes.add(space);
         
-        // 全局变量分配 + 函数分配 + main函数
+        Integer itemInFunc = 0;
+        // 为了预防递归问题，必须先行计算函数长度
+        for (Integer i = 0;i < midCodes.size();i++) {
+            MidCode midCode = midCodes.get(i);
         
+            switch (midCode.op) {
+                case BLOCK:
+                    if (midCode.x.equals("start")) {
+                        blockStack.add(midCode.z);
+                    } else {
+                        int index = blockStack.size() - 1;
+                        String str = blockStack.remove(index);
+                        if (str.equals(funcBlockStr)) {
+                            funcLength.put(curFunc,itemInFunc + 8);  // 防止出意外？多留一点？todo 可能会因为数组出现变化
+                            curFunc = null;
+                            funcBlockStr = null;
+                            itemInFunc = 0;
+                        }
+                    }
+                    break;
+                case FUNC:
+                    curFunc = midCode.z;
+                    itemInFunc = 0;
+                    if (i >= 1 && midCodes.get(i - 1) != null) {
+                        funcBlockStr = midCodes.get(i - 1).z;
+                    }
+                    break;
+                case PARA:   // todo 数组会不一样
+                case VAR:
+                case CONST:
+                    itemInFunc++;
+                    break;
+                case ASSIGNOP:
+                case PLUSOP:
+                case MINUOP:
+                case MULTOP:
+                case DIVOP:
+                case MODOP:
+                case SCAN:
+                case RETVALUE:
+                case LSSOP:
+                case LEQOP:
+                case GREOP:
+                case GEQOP:
+                case EQLOP:
+                case NEQOP:
+                    if (isTemp(midCode.z)) {
+                        itemInFunc++;
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        
+        // 全局变量分配 + 函数分配 + main函数
         finalCodes.add(new FinalCode(mipsOp.text));
         for (Integer i = 0;i < midCodes.size();i++) {
             MidCode midCode = midCodes.get(i);
@@ -213,16 +267,16 @@ public class MipsGenerator {
                 case BLOCK:
                     if (midCode.x.equals("start")) {
                         curTable = new IntegerTable(curTable);
-                        blockStack.add(midCode.z);
+                        //blockStack.add(midCode.z);
                     } else {
                         curTable = curTable.getParent();
-                        int index = blockStack.size() - 1;
-                        String str = blockStack.remove(index);
-                        if (str.equals(funcBlockStr)) {
-                            funcLength.put(curFunc,itemNum + 5);  // 防止出意外？多留一点？todo 可能会因为数组出现变化
-                            curFunc = null;
-                            funcBlockStr = null;
-                        }
+                        //int index = blockStack.size() - 1;
+                        //String str = blockStack.remove(index);
+                        //if (str.equals(funcBlockStr)) {
+                        //    funcLength.put(curFunc,itemNum + 5);  // 防止出意外？多留一点？todo 可能会因为数组出现变化
+                        //    curFunc = null;
+                        //    funcBlockStr = null;
+                        //}
                         finalCodes.add(new FinalCode(mipsOp.space));
                     }
                     break;
@@ -235,9 +289,9 @@ public class MipsGenerator {
                     finalCodes.add(new FinalCode(mipsOp.label,midCode.z));
                     curFunc = midCode.z;
                     itemNum = 0;
-                    if (i >= 1 && midCodes.get(i - 1) != null) {
-                        funcBlockStr = midCodes.get(i - 1).z;
-                    }
+                    //if (i >= 1 && midCodes.get(i - 1) != null) {
+                    //    funcBlockStr = midCodes.get(i - 1).z;
+                    //}
                     break;
                 case PARA: // 跟var类似   // todo 数组
                     define(midCode.z);
@@ -259,12 +313,15 @@ public class MipsGenerator {
                 case CALL:
                     // 传入形参
                     int j = 0;
-                    for (MidCode paraR:paraRs) {
+                    for (MidCode paraR:paraRs) { // todo 数组会不一样
                         loadValue(paraR.z,"$t0");
                         finalCodes.add(new FinalCode(mipsOp.sw, "$t0", "$sp", "", -4 * j));
                         j++;
                     }
-                    paraRs.clear();
+                    for (int k = 0;k < j;k++) {
+                        int lengthPara = paraRs.size();
+                        paraRs.remove(lengthPara - 1);
+                    }
                     
                     int len = 0;
                     if (funcLength.containsKey(midCode.z)) {

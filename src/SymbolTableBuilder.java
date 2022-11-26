@@ -13,6 +13,7 @@ import component.NonTerminator;
 import component.TokenTYPE;
 import component.Token;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -76,7 +77,7 @@ public class SymbolTableBuilder {
             Integer curNum = blockNum;
             midCodes.add(new MidCode(midOp.BLOCK,curNum.toString(),"start"));
             blockNum++;
-            midCodes.add(new MidCode(midOp.MAIN));
+            midCodes.add(new MidCode(midOp.MAIN,"main"));
             
             SymbolTable childTable = parseFuncBlock(block,1,rootTable,null,true);
             
@@ -833,16 +834,18 @@ public class SymbolTableBuilder {
             undefineError(ident.getToken(),calculatingTable,true);
             
             Node funcRParams = null;
+            ArrayList<MidCode> paraReals = new ArrayList<>();
             int i = 0;
             int paraNum = 0;
             if (unaryNode.getChildren() != null && unaryNode.getChildren().size() == 4) {
                 funcRParams = unaryNode.childIterator(2);
                 while (i < funcRParams.getChildren().size()) {
                     ExpItem paraReal = AddExp(funcRParams.childIterator(i).unwrap());
-                    midCodes.add(new MidCode(midOp.PUSH,paraReal.getStr()));  // todo 形参：数组地址，指针变量区分问题
+                    paraReals.add(new MidCode(midOp.PUSH,paraReal.getStr())); // todo 形参：数组地址，指针变量区分问题
                     i += 2;
                     paraNum += 1;
                 }
+                midCodes.addAll(paraReals);
             }
             
             Boolean hasNumError = paraNumError(paraNum,ident.getToken(),calculatingTable);
