@@ -456,7 +456,7 @@ public class SymbolTableBuilder {
         }
         else if (typeCheckLeaf(stmt.getFirstLeafNode(),TokenTYPE.RETURNTK)) {
             if (typeCheckLeaf(stmt.childIterator(1),TokenTYPE.SEMICN)) {  // return ;
-                // 什么都不用做，外层做了
+                midCodes.add(new MidCode(midOp.RET));
             } else {
                 calculatingTable = table;
                 ExpItem z = AddExp(stmt.childIterator(1).unwrap());
