@@ -29,7 +29,7 @@ public class MipsGenerator {
         space = new FinalCode(mipsOp.space);
         itemNum = 0;
         paraRs = new ArrayList<>();
-        setMainLength();
+        //setMainLength();
         genMips();
     }
     
@@ -41,7 +41,7 @@ public class MipsGenerator {
                 break;
             }
         }
-        Integer length = midCodes.size() - i + 5;  // 防止出意外？多留一点？todo 可能会因为数组出现变化
+        Integer length = midCodes.size() - i + 5;
         funcLength.put("main",length);
     }
     
@@ -142,7 +142,6 @@ public class MipsGenerator {
     }
     
     private void defineArray(String ident,Integer arrayLen) {
-        // todo 局部的和宏观的变量有啥不一样吗？应该都是存在宏观对吧？？
         // if (curTable.contains(ident)) { return; }  数据约束，不会出现重复定义
         ItemArray item = new ItemArray(ident,itemNum,arrayLen);
         itemNum += arrayLen;
@@ -159,7 +158,7 @@ public class MipsGenerator {
     }
     
     private void genMips() {
-        // 数据区  字符串常量+ todo 数组
+        // 数据区  字符串常量
         finalCodes.add(new FinalCode(mipsOp.data));
         for(String str:conStrings.keySet()) {
             finalCodes.add(new FinalCode(mipsOp.conString,conStrings.get(str),str));
@@ -180,7 +179,7 @@ public class MipsGenerator {
                         int index = blockStack.size() - 1;
                         String str = blockStack.remove(index);
                         if (str.equals(funcBlockStr)) {
-                            funcLength.put(curFunc,itemInFunc + 8);  // 防止出意外？多留一点？todo 可能会因为数组出现变化
+                            funcLength.put(curFunc,itemInFunc + 8);
                             curFunc = null;
                             funcBlockStr = null;
                             itemInFunc = 0;
@@ -188,13 +187,14 @@ public class MipsGenerator {
                     }
                     break;
                 case FUNC:
+                case MAIN:
                     curFunc = midCode.z;
                     itemInFunc = 0;
                     if (i >= 1 && midCodes.get(i - 1) != null) {
                         funcBlockStr = midCodes.get(i - 1).z;
                     }
                     break;
-                case PARA:   // todo 数组会不一样
+                case PARA:   // todo 形参为数组时，占据的长度还要增加
                 case VAR:
                 case CONST:
                     itemInFunc++;
@@ -216,6 +216,13 @@ public class MipsGenerator {
                     if (isTemp(midCode.z)) {
                         itemInFunc++;
                     }
+                    break;
+                case ARRAY:
+                    Integer arraySpace = Integer.parseInt(midCode.x);
+                    if (midCode.y != null) {
+                        arraySpace = arraySpace * Integer.parseInt(midCode.y);
+                    }
+                    itemInFunc += arraySpace;
                     break;
                 default:
                     break;
@@ -306,7 +313,7 @@ public class MipsGenerator {
                         //int index = blockStack.size() - 1;
                         //String str = blockStack.remove(index);
                         //if (str.equals(funcBlockStr)) {
-                        //    funcLength.put(curFunc,itemNum + 5);  // 防止出意外？多留一点？todo 可能会因为数组出现变化
+                        //    funcLength.put(curFunc,itemNum + 5);  // 防止出意外？多留一点
                         //    curFunc = null;
                         //    funcBlockStr = null;
                         //}

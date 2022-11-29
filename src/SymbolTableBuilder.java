@@ -40,6 +40,8 @@ public class SymbolTableBuilder {
     private static Integer curStartNum = 0;
     private static Integer curEndNum = 0;
     
+    private SymbolTable root_table = null;
+    
     public SymbolTableBuilder(Node ast,ArrayList<MyError> errorList) {
         this.ast = ast;
         this.errorList = errorList;
@@ -58,6 +60,7 @@ public class SymbolTableBuilder {
     public SymbolTable buildSymbolTable() {
         int depth = 0;
         SymbolTable rootTable = new SymbolTable(0,null);
+        root_table = rootTable;
         
         ArrayList<Node> children = ast.getChildren();
         for(Node child: children) {
@@ -407,9 +410,11 @@ public class SymbolTableBuilder {
         } else if (children.size() == 4) {
             item.setDimension(1);
             midCode.setX("1");
-        } else {
+        } else if (children.size() == 7) {
             item.setDimension(2);
             midCode.setX("2");
+            Integer dimension2 = CalConst(funcFParamNode.childIterator(5),root_table);
+            midCode.setY(dimension2.toString());
         }
         midCodes.add(midCode);
         return item;
@@ -841,7 +846,7 @@ public class SymbolTableBuilder {
                 funcRParams = unaryNode.childIterator(2);
                 while (i < funcRParams.getChildren().size()) {
                     ExpItem paraReal = AddExp(funcRParams.childIterator(i).unwrap());
-                    paraReals.add(new MidCode(midOp.PUSH,paraReal.getStr())); // todo 形参：数组地址，指针变量区分问题
+                    paraReals.add(new MidCode(midOp.PUSH,paraReal.getStr())); // todo 形参：数组地址，指针变量区分问题(错误处理那部分可以借鉴，如何对齐维数)
                     i += 2;
                     paraNum += 1;
                 }

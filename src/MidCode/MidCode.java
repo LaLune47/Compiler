@@ -72,7 +72,7 @@ public class MidCode {
                     return "para int " + z + "[][" + y + "]";
                 }
             case MAIN:
-                return "\nMAIN\n";
+                return "\nint MAIN()\n";
             case EXIT:
                 return "\n<------------------EXIT------------------>";
             case PLUSOP:
@@ -100,7 +100,7 @@ public class MidCode {
                 return z + " = " + x + " != " + y;
                 
             case PUSH:
-                return "push " + z;  // todo 注意：实参为数组，指针变量
+                return "push " + z;  // todo 注意：实参为数组，地址指针变量
             case RETVALUE:
                 return "retValue " + z;
             case CALL:
@@ -116,8 +116,7 @@ public class MidCode {
                 return "scan " + z;
             case ASSIGNOP:
                 return z + " = " + x;
-                
-                // todo 未实现：数组存取值
+          
             case AssignARRAY:
                 return z + "[" + x + "]" + " = " + y;
             case GetARRAY:
@@ -130,7 +129,6 @@ public class MidCode {
             case PRINTEXP:   //写变量
                 return "print " + z;
                 
-                // todo 未实现：数组定义
             case ARRAY:
                 if (y == null) {
                     return "array " + z + "[" + x + "]";
