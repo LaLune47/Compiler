@@ -94,6 +94,18 @@ public class MipsGenerator {
         }
     }
     
+    private void loadArrayValue(String ident,String regName, String regIndexOffset) {
+        boolean isGlobal = getGlobal(ident);
+        Integer offset = getOffset(ident);
+        if (isGlobal) {
+            finalCodes.add(new FinalCode(mipsOp.add, regIndexOffset, regIndexOffset, "$gp"));
+            finalCodes.add(new FinalCode(mipsOp.lw, regName, regIndexOffset, "", 4 * offset + 4));  //因为数组编号从0开始
+        } else {
+            finalCodes.add(new FinalCode(mipsOp.sub, regIndexOffset, "$fp",regIndexOffset));
+            finalCodes.add(new FinalCode(mipsOp.lw, regName, regIndexOffset, "", -4 * offset - 4));
+        }
+    }
+    
     private void storeValue(String ident, String regName,boolean isNew) {
         if (isNew) {
             define(ident);
@@ -107,6 +119,18 @@ public class MipsGenerator {
         }
     }
     
+    private void storeArrayValue(String ident, String regName, String regIndexOffset) {
+        boolean isGlobal = getGlobal(ident);
+        Integer offset = getOffset(ident);
+        if (isGlobal) {
+            finalCodes.add(new FinalCode(mipsOp.add, regIndexOffset, regIndexOffset, "$gp"));
+            finalCodes.add(new FinalCode(mipsOp.sw, regName, regIndexOffset, "", 4 * offset + 4));  //因为数组编号从0开始
+        } else {
+            finalCodes.add(new FinalCode(mipsOp.sub, regIndexOffset, "$fp",regIndexOffset));
+            finalCodes.add(new FinalCode(mipsOp.sw, regName, regIndexOffset, "", -4 * offset - 4));
+        }
+    }
+    
     private void define(String ident) {
         if (curTable.contains(ident)) {
             return;
@@ -114,6 +138,15 @@ public class MipsGenerator {
         ItemInteger item = new ItemInteger(ident,itemNum);
         itemNum++;
         curTable.addItem(item);
+        item.setTable(curTable);
+    }
+    
+    private void defineArray(String ident,Integer arrayLen) {
+        // todo 局部的和宏观的变量有啥不一样吗？应该都是存在宏观对吧？？
+        // if (curTable.contains(ident)) { return; }  数据约束，不会出现重复定义
+        ItemArray item = new ItemArray(ident,itemNum,arrayLen);
+        itemNum += arrayLen;
+        curTable.addItemArray(item);
         item.setTable(curTable);
     }
     
@@ -405,6 +438,26 @@ public class MipsGenerator {
                     storeValue(midCode.z,"$t2",isTemp(midCode.z));
                     break;
                     
+                case ARRAY:
+                    Integer arraySpace = Integer.parseInt(midCode.x);
+                    if (midCode.y != null) {
+                        arraySpace = arraySpace * Integer.parseInt(midCode.y);
+                    }
+                    defineArray(midCode.z,arraySpace);
+                    break;
+                case AssignARRAY:   // z + "[" + x + "]" + " = " + y;
+                    loadValue(midCode.y,"$t0");
+                    loadValue(midCode.x, "$t1");
+                    finalCodes.add(new FinalCode(mipsOp.sll, "$t1", "$t1", "", 2));
+                    storeArrayValue(midCode.z,"$t0","$t1");
+                    break;
+                case GetARRAY:     //z + " = " + x + "[" + y + "]";
+                    loadValue(midCode.y, "$t0");
+                    finalCodes.add(new FinalCode(mipsOp.sll, "$t0", "$t0", "", 2));
+                    loadArrayValue(midCode.x,"$t1","$t0");
+                    storeValue(midCode.z,"$t1",isTemp(midCode.z));
+                    break;
+                    
                 case EXIT:
                 default:
                     break;
@@ -507,9 +560,10 @@ public class MipsGenerator {
                 case sne:
                     System.out.println("sne " + code.z + "," + code.x + "," + code.y);
                     break;
-                case nor:
-                    System.out.println("nor " + code.z + "," + code.x + "," + code.y);
+                case sll:
+                    System.out.println("sll " + code.z + "," + code.x + "," + code.imm);
                     break;
+                    
                     
                 default:
                     break;

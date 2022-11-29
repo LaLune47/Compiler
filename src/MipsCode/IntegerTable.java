@@ -6,6 +6,7 @@ import java.util.HashMap;
 public class IntegerTable {
     private IntegerTable parent;
     private HashMap<String,ItemInteger> itemIntegers;
+    private HashMap<String,ItemArray> itemArrays;
     private boolean isGlobal;
     
     public IntegerTable(IntegerTable parent) {
@@ -16,10 +17,15 @@ public class IntegerTable {
             isGlobal = false;
         }
         itemIntegers = new HashMap<>();
+        itemArrays = new HashMap<>();
     }
     
     public void addItem(ItemInteger itemInteger) {
         itemIntegers.put(itemInteger.getName(),itemInteger);
+    }
+    
+    public void addItemArray(ItemArray itemArray) {
+        itemArrays.put(itemArray.getName(),itemArray);
     }
     
     public boolean contains(String name) {
@@ -42,7 +48,7 @@ public class IntegerTable {
         return isGlobal;
     }
     
-    public Integer length() {
-        return itemIntegers.size();
-    }
+//    public Integer length() {
+//        return itemIntegers.size();
+//    }
 }
