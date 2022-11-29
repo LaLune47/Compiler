@@ -64,7 +64,7 @@ public class MidCode {
                     return "---------BLOCK " + z + " " + x + "--------->";
                 }
             case PARA:
-                if (x.equals("0")) {   // todo 形参数组
+                if (x.equals("0")) {   // todo 注意：形参为数组
                     return "para int " + z;
                 } else if (x.equals("1")) {
                     return "para int " + z + "[]";
@@ -86,7 +86,6 @@ public class MidCode {
             case MODOP:
                 return z + " = " + x + " % " + y;
                 
-                //todo 六个比较函数，cond
             case LSSOP:
                 return z + " = " + x + " < " + y;
             case LEQOP:
@@ -101,7 +100,7 @@ public class MidCode {
                 return z + " = " + x + " != " + y;
                 
             case PUSH:
-                return "push " + z;  // todo 实参数组
+                return "push " + z;  // todo 注意：实参为数组，指针变量
             case RETVALUE:
                 return "retValue " + z;
             case CALL:
@@ -118,7 +117,7 @@ public class MidCode {
             case ASSIGNOP:
                 return z + " = " + x;
                 
-                // todo 数组相关
+                // todo 未实现：数组存取值
             case AssignARRAY:
                 return z + "[" + x + "]" + " = " + y;
             case GetARRAY:
@@ -131,7 +130,7 @@ public class MidCode {
             case PRINTEXP:   //写变量
                 return "print " + z;
                 
-                // todo 数组定义，三个跳转
+                // todo 未实现：数组定义
             case ARRAY:
                 if (y == null) {
                     return "array " + z + "[" + x + "]";
