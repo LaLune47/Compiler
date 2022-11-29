@@ -64,9 +64,28 @@ public class MipsGenerator {
         return null;
     }
     
+    private ItemArray findItemArray(String name) {
+        IntegerTable table = curTable;
+        while (table != null) {
+            if (table.containsArray(name)) {
+                return table.getItemArray(name);
+            }
+            table = table.getParent();
+        }
+        return null;
+    }
+    
     private Integer getOffset(String name) {
         if (findItem(name) != null) {
             return findItem(name).getOffset();
+        } else {
+            return 0;
+        }
+    }
+    
+    private Integer getArrayOffset(String name) {
+        if (findItemArray(name) != null) {
+            return findItemArray(name).getOffset();
         } else {
             return 0;
         }
@@ -96,13 +115,13 @@ public class MipsGenerator {
     
     private void loadArrayValue(String ident,String regName, String regIndexOffset) {
         boolean isGlobal = getGlobal(ident);
-        Integer offset = getOffset(ident);
+        Integer offset = getArrayOffset(ident);
         if (isGlobal) {
             finalCodes.add(new FinalCode(mipsOp.add, regIndexOffset, regIndexOffset, "$gp"));
-            finalCodes.add(new FinalCode(mipsOp.lw, regName, regIndexOffset, "", 4 * offset + 4));  //因为数组编号从0开始
+            finalCodes.add(new FinalCode(mipsOp.lw, regName, regIndexOffset, "", 4 * offset));  //因为数组编号从0开始
         } else {
             finalCodes.add(new FinalCode(mipsOp.sub, regIndexOffset, "$fp",regIndexOffset));
-            finalCodes.add(new FinalCode(mipsOp.lw, regName, regIndexOffset, "", -4 * offset - 4));
+            finalCodes.add(new FinalCode(mipsOp.lw, regName, regIndexOffset, "", -4 * offset));
         }
     }
     
@@ -121,13 +140,13 @@ public class MipsGenerator {
     
     private void storeArrayValue(String ident, String regName, String regIndexOffset) {
         boolean isGlobal = getGlobal(ident);
-        Integer offset = getOffset(ident);
+        Integer offset = getArrayOffset(ident);
         if (isGlobal) {
             finalCodes.add(new FinalCode(mipsOp.add, regIndexOffset, regIndexOffset, "$gp"));
-            finalCodes.add(new FinalCode(mipsOp.sw, regName, regIndexOffset, "", 4 * offset + 4));  //因为数组编号从0开始
+            finalCodes.add(new FinalCode(mipsOp.sw, regName, regIndexOffset, "", 4 * offset));  //因为数组编号从0开始
         } else {
             finalCodes.add(new FinalCode(mipsOp.sub, regIndexOffset, "$fp",regIndexOffset));
-            finalCodes.add(new FinalCode(mipsOp.sw, regName, regIndexOffset, "", -4 * offset - 4));
+            finalCodes.add(new FinalCode(mipsOp.sw, regName, regIndexOffset, "", -4 * offset));
         }
     }
     

@@ -32,9 +32,21 @@ public class IntegerTable {
         return itemIntegers.containsKey(name);
     }
     
+    public boolean containsArray(String name) {
+        return itemArrays.containsKey(name);
+    }
+    
     public ItemInteger getItem(String name) {
         if (contains(name)) {
             return itemIntegers.get(name);
+        } else {
+            return null;
+        }
+    }
+    
+    public ItemArray getItemArray(String name) {
+        if (containsArray(name)) {
+            return itemArrays.get(name);
         } else {
             return null;
         }
