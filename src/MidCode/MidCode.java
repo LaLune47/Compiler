@@ -64,7 +64,7 @@ public class MidCode {
                     return "---------BLOCK " + z + " " + x + "--------->";
                 }
             case PARA:
-                if (x.equals("0")) {   // todo 注意：形参为数组
+                if (x.equals("0")) {
                     return "para int " + z;
                 } else if (x.equals("1")) {
                     return "para int " + z + "[]";
@@ -100,7 +100,11 @@ public class MidCode {
                 return z + " = " + x + " != " + y;
                 
             case PUSH:
-                return "push " + z;  // todo 注意：实参为数组，地址指针变量
+                if (x == null) {
+                    return "push " + z;
+                } else {
+                    return "push " + z + ",传入数组第" + x + "行,数组第二维长度为" + y;
+                }
             case RETVALUE:
                 return "retValue " + z;
             case CALL:

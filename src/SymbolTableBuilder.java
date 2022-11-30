@@ -845,8 +845,12 @@ public class SymbolTableBuilder {
             if (unaryNode.getChildren() != null && unaryNode.getChildren().size() == 4) {
                 funcRParams = unaryNode.childIterator(2);
                 while (i < funcRParams.getChildren().size()) {
-                    ExpItem paraReal = AddExp(funcRParams.childIterator(i).unwrap());
-                    paraReals.add(new MidCode(midOp.PUSH,paraReal.getStr())); // todo 形参：数组地址，指针变量区分问题(错误处理那部分可以借鉴，如何对齐维数)
+                    Boolean flag = paraArray(funcRParams.childIterator(i));
+                    if (flag == false) {
+                        ExpItem paraReal = AddExp(funcRParams.childIterator(i).unwrap());
+                        MidCode pushMc = new MidCode(midOp.PUSH,paraReal.getStr());
+                        paraReals.add(pushMc);
+                    }
                     i += 2;
                     paraNum += 1;
                 }
@@ -864,6 +868,44 @@ public class SymbolTableBuilder {
             midCodes.add(new MidCode(midOp.RETVALUE,retValue.getStr()));
             
             return retValue;
+        }
+    }
+    
+    private boolean paraArray(Node exp) {
+        int dimension = 0;
+        Node lVal = null;
+
+        if (exp.unwrap() != null && exp.unwrap().unwrap() != null
+                && exp.unwrap().unwrap().unwrap() != null
+                && typeCheckBranch(exp.unwrap().unwrap().unwrap(),NonTerminator.UnaryExp)) {
+            Node unaryExp = exp.unwrap().unwrap().unwrap();
+            if (unaryExp.unwrap() != null && unaryExp.unwrap().unwrap() != null
+                    &&  typeCheckBranch(unaryExp.unwrap().unwrap(),NonTerminator.LVal)) {
+                lVal = unaryExp.unwrap().unwrap();
+                String ident = lVal.getFirstLeafNode().getValue();
+                int num = (lVal.getChildren().size() - 1) / 3;  // 实参括号数
+                dimension = calculatingTable.findItem_dimension(ident) - num;  // 实参实际维度
+            } else {
+                return false;
+            }
+        }
+        if (dimension > 0) { //",传入数组第" + x + "行,数组第二维长度为" + y;
+            // 二维传二维（ident），一维传一维（ident），二维传一维（ident[exp]），
+            MidCode midCode = new MidCode(midOp.PUSH);
+            String ident = lVal.getFirstLeafNode().getValue();
+            midCode.setZ(ident);
+            if (lVal.getChildren().size() == 4) {
+                ExpItem item = AddExp(lVal.childIterator(2).unwrap());
+                midCode.setX(item.getStr());
+                midCode.setY(calculatingTable.findItem_space2(ident).toString());
+            } else {
+                midCode.setX("array");
+                midCode.setY("array");
+            }
+            midCodes.add(midCode);
+            return true;
+        } else { // 实参不为数组，可通过addExp正确得到
+            return false;
         }
     }
     

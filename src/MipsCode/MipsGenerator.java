@@ -105,6 +105,7 @@ public class MipsGenerator {
         } else {
             boolean isGlobal = getGlobal(ident);
             Integer offset = getOffset(ident);
+            // todo
             if (isGlobal) {
                 finalCodes.add(new FinalCode(mipsOp.lw, regName, "$gp", "", 4 * offset));
             } else {
