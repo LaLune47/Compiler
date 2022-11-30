@@ -138,8 +138,8 @@ public class MipsGenerator {
             finalCodes.add(new FinalCode(mipsOp.add, regIndexOffset, regIndexOffset, "$gp"));
             finalCodes.add(new FinalCode(mipsOp.addi,regName,regIndexOffset,"",4 * offset));
         } else {
-            finalCodes.add(new FinalCode(mipsOp.sub, regIndexOffset, "$fp",regIndexOffset));
-            finalCodes.add(new FinalCode(mipsOp.addi,regName,regIndexOffset,"",-4 * offset));
+            finalCodes.add(new FinalCode(mipsOp.add, regIndexOffset, "$fp",regIndexOffset));
+            finalCodes.add(new FinalCode(mipsOp.addi,regName,regIndexOffset,"",4 * offset));
         }
     }
     
@@ -156,12 +156,12 @@ public class MipsGenerator {
                 finalCodes.add(new FinalCode(mipsOp.add, regIndexOffset, regIndexOffset, "$gp"));
                 finalCodes.add(new FinalCode(mipsOp.lw, regName, regIndexOffset, "", 4 * offset));  //因为数组编号从0开始
             } else {
-                finalCodes.add(new FinalCode(mipsOp.sub, regIndexOffset, "$fp",regIndexOffset));
-                finalCodes.add(new FinalCode(mipsOp.lw, regName, regIndexOffset, "", -4 * offset));
+                finalCodes.add(new FinalCode(mipsOp.add, regIndexOffset, "$fp",regIndexOffset));
+                finalCodes.add(new FinalCode(mipsOp.lw, regName, regIndexOffset, "", 4 * offset));
             }
         }
     }
-    // todo 数组增长方向最好一致： 现在的方向是增加
+
     private void storeValue(String ident, String regName,boolean isNew) {
         if (isNew) {
             define(ident,false);
@@ -188,8 +188,8 @@ public class MipsGenerator {
                 finalCodes.add(new FinalCode(mipsOp.add, regIndexOffset, regIndexOffset, "$gp"));
                 finalCodes.add(new FinalCode(mipsOp.sw, regName, regIndexOffset, "", 4 * offset));  //因为数组编号从0开始
             } else {
-                finalCodes.add(new FinalCode(mipsOp.sub, regIndexOffset, "$fp",regIndexOffset));
-                finalCodes.add(new FinalCode(mipsOp.sw, regName, regIndexOffset, "", -4 * offset));
+                finalCodes.add(new FinalCode(mipsOp.add, regIndexOffset, "$fp",regIndexOffset));
+                finalCodes.add(new FinalCode(mipsOp.sw, regName, regIndexOffset, "", 4 * offset));
             }
         }
     }
@@ -206,8 +206,15 @@ public class MipsGenerator {
     
     private void defineArray(String ident,Integer arrayLen) {
         // if (curTable.contains(ident)) { return; }  数据约束，不会出现重复定义
-        ItemArray item = new ItemArray(ident,itemNum,arrayLen);
-        itemNum += arrayLen;
+        ItemArray item = null;
+        if (curTable.getParent() == null) {
+            item = new ItemArray(ident,itemNum,arrayLen);
+            itemNum += arrayLen;
+        } else {
+            itemNum += arrayLen - 1;
+            item = new ItemArray(ident,itemNum,arrayLen);
+            itemNum++;
+        }
         curTable.addItemArray(item);
         item.setTable(curTable);
     }
@@ -535,12 +542,12 @@ public class MipsGenerator {
                     loadValue(midCode.y,"$t0");
                     loadValue(midCode.x, "$t1");
                     finalCodes.add(new FinalCode(mipsOp.sll, "$t1", "$t1", "", 2));
-                    storeArrayValue(midCode.z,"$t0","$t1"); // todo
+                    storeArrayValue(midCode.z,"$t0","$t1");
                     break;
                 case GetARRAY:     //z + " = " + x + "[" + y + "]";
                     loadValue(midCode.y, "$t0");
                     finalCodes.add(new FinalCode(mipsOp.sll, "$t0", "$t0", "", 2));
-                    loadArrayValue(midCode.x,"$t1","$t0");  // todo
+                    loadArrayValue(midCode.x,"$t1","$t0");
                     storeValue(midCode.z,"$t1",isTemp(midCode.z));
                     break;
                     
