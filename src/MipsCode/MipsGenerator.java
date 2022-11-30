@@ -7,6 +7,8 @@ import MidCode.midOp;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import static java.lang.Integer.parseInt;
+
 public class MipsGenerator {
     private ArrayList<MidCode> midCodes;
     private HashMap<String,String> conStrings;
@@ -99,13 +101,28 @@ public class MipsGenerator {
         }
     }
     
+    private Boolean getGlobalArray(String name) {
+        if (findItemArray(name) != null) {
+            return findItemArray(name).isGlobal();
+        } else {
+            return false;
+        }
+    }
+    
+    private Boolean isPointer(String name) {
+        if (findItem(name) != null) {
+            return findItem(name).getPointer();
+        } else {
+            return false;
+        }
+    }
+    
     private void loadValue(String ident,String regName) {  //load, origin为数字或者已定义的ident
         if (isImm(ident)) {
-            finalCodes.add(new FinalCode(mipsOp.li,regName,"","",Integer.parseInt(ident)));
+            finalCodes.add(new FinalCode(mipsOp.li,regName,"","", parseInt(ident)));
         } else {
             boolean isGlobal = getGlobal(ident);
             Integer offset = getOffset(ident);
-            // todo
             if (isGlobal) {
                 finalCodes.add(new FinalCode(mipsOp.lw, regName, "$gp", "", 4 * offset));
             } else {
@@ -114,21 +131,40 @@ public class MipsGenerator {
         }
     }
     
-    private void loadArrayValue(String ident,String regName, String regIndexOffset) {
-        boolean isGlobal = getGlobal(ident);
+    private void loadAddress(String ident,String regName, String regIndexOffset) {
+        boolean isGlobal = getGlobalArray(ident);
         Integer offset = getArrayOffset(ident);
         if (isGlobal) {
             finalCodes.add(new FinalCode(mipsOp.add, regIndexOffset, regIndexOffset, "$gp"));
-            finalCodes.add(new FinalCode(mipsOp.lw, regName, regIndexOffset, "", 4 * offset));  //因为数组编号从0开始
+            finalCodes.add(new FinalCode(mipsOp.addi,regName,regIndexOffset,"",4 * offset));
         } else {
             finalCodes.add(new FinalCode(mipsOp.sub, regIndexOffset, "$fp",regIndexOffset));
-            finalCodes.add(new FinalCode(mipsOp.lw, regName, regIndexOffset, "", -4 * offset));
+            finalCodes.add(new FinalCode(mipsOp.addi,regName,regIndexOffset,"",-4 * offset));
         }
     }
     
+    private void loadArrayValue(String ident,String regName, String regIndexOffset) {
+        Boolean isPointer = isPointer(ident);
+        if (isPointer) {
+            loadValue(ident,"$t2");  // 获得地址
+            finalCodes.add(new FinalCode(mipsOp.add, "$t2", regIndexOffset, "$t2"));
+            finalCodes.add(new FinalCode(mipsOp.lw, regName, "$t2", "", 0));
+        } else {
+            boolean isGlobal = getGlobalArray(ident);
+            Integer offset = getArrayOffset(ident);
+            if (isGlobal) {
+                finalCodes.add(new FinalCode(mipsOp.add, regIndexOffset, regIndexOffset, "$gp"));
+                finalCodes.add(new FinalCode(mipsOp.lw, regName, regIndexOffset, "", 4 * offset));  //因为数组编号从0开始
+            } else {
+                finalCodes.add(new FinalCode(mipsOp.sub, regIndexOffset, "$fp",regIndexOffset));
+                finalCodes.add(new FinalCode(mipsOp.lw, regName, regIndexOffset, "", -4 * offset));
+            }
+        }
+    }
+    // todo 数组增长方向最好一致： 现在的方向是增加
     private void storeValue(String ident, String regName,boolean isNew) {
         if (isNew) {
-            define(ident);
+            define(ident,false);
         }
         boolean isGlobal = getGlobal(ident);
         Integer offset = getOffset(ident);
@@ -140,22 +176,29 @@ public class MipsGenerator {
     }
     
     private void storeArrayValue(String ident, String regName, String regIndexOffset) {
-        boolean isGlobal = getGlobal(ident);
-        Integer offset = getArrayOffset(ident);
-        if (isGlobal) {
-            finalCodes.add(new FinalCode(mipsOp.add, regIndexOffset, regIndexOffset, "$gp"));
-            finalCodes.add(new FinalCode(mipsOp.sw, regName, regIndexOffset, "", 4 * offset));  //因为数组编号从0开始
+        Boolean isPointer = isPointer(ident);
+        if (isPointer) {
+            loadValue(ident,"$t2");  // 获得地址
+            finalCodes.add(new FinalCode(mipsOp.add, "$t2", regIndexOffset, "$t2"));
+            finalCodes.add(new FinalCode(mipsOp.sw, regName, "$t2", "", 0));
         } else {
-            finalCodes.add(new FinalCode(mipsOp.sub, regIndexOffset, "$fp",regIndexOffset));
-            finalCodes.add(new FinalCode(mipsOp.sw, regName, regIndexOffset, "", -4 * offset));
+            boolean isGlobal = getGlobalArray(ident);
+            Integer offset = getArrayOffset(ident);
+            if (isGlobal) {
+                finalCodes.add(new FinalCode(mipsOp.add, regIndexOffset, regIndexOffset, "$gp"));
+                finalCodes.add(new FinalCode(mipsOp.sw, regName, regIndexOffset, "", 4 * offset));  //因为数组编号从0开始
+            } else {
+                finalCodes.add(new FinalCode(mipsOp.sub, regIndexOffset, "$fp",regIndexOffset));
+                finalCodes.add(new FinalCode(mipsOp.sw, regName, regIndexOffset, "", -4 * offset));
+            }
         }
     }
     
-    private void define(String ident) {
+    private void define(String ident,Boolean isPointer) {
         if (curTable.contains(ident)) {
             return;
         }
-        ItemInteger item = new ItemInteger(ident,itemNum);
+        ItemInteger item = new ItemInteger(ident,itemNum,isPointer);
         itemNum++;
         curTable.addItem(item);
         item.setTable(curTable);
@@ -214,7 +257,7 @@ public class MipsGenerator {
                         funcBlockStr = midCodes.get(i - 1).z;
                     }
                     break;
-                case PARA:   // todo 形参为数组时，占据的长度还要增加
+                case PARA:   // 形参为数组时，传入指针，只占一个位置
                 case VAR:
                 case CONST:
                     itemInFunc++;
@@ -238,9 +281,9 @@ public class MipsGenerator {
                     }
                     break;
                 case ARRAY:
-                    Integer arraySpace = Integer.parseInt(midCode.x);
+                    Integer arraySpace = parseInt(midCode.x);
                     if (midCode.y != null) {
-                        arraySpace = arraySpace * Integer.parseInt(midCode.y);
+                        arraySpace = arraySpace * parseInt(midCode.y);
                     }
                     itemInFunc += arraySpace;
                     break;
@@ -260,7 +303,7 @@ public class MipsGenerator {
                         loadValue(midCode.x,"$t0");
                         storeValue(midCode.z,"$t0",true);
                     } else {
-                        define(midCode.z);
+                        define(midCode.z,false);
                     }
                     break;
                 case CONST:
@@ -353,8 +396,12 @@ public class MipsGenerator {
                     //    funcBlockStr = midCodes.get(i - 1).z;
                     //}
                     break;
-                case PARA: // 跟var类似   // todo 数组
-                    define(midCode.z);
+                case PARA: // 跟var类似   当为数组时,isPointer = true
+                    if (midCode.x.equals("0")) {
+                        define(midCode.z,false);
+                    } else {
+                        define(midCode.z,true);
+                    }
                     break;
                 case RET:
                     if (inMain) {
@@ -373,8 +420,20 @@ public class MipsGenerator {
                 case CALL:
                     // 传入形参
                     int j = 0;
-                    for (MidCode paraR:paraRs) { // todo 数组会不一样
-                        loadValue(paraR.z,"$t0");
+                    for (MidCode paraR:paraRs) {
+                        if (paraR.x == null) {
+                            loadValue(paraR.z,"$t0");  // 传入为值
+                        } else {
+                            if (paraR.x != null && paraR.y != null && !paraR.y.equals("array")) {  // 2传1的情况
+                                loadValue(paraR.x, "$t0");  // 第几行
+                                finalCodes.add(new FinalCode(mipsOp.li, "$t1", "", "", parseInt(paraR.y) * 4)); // space2,顺便乘个4
+                                finalCodes.add(new FinalCode(mipsOp.mult, "$t1", "$t0", ""));
+                                finalCodes.add(new FinalCode(mipsOp.mflo, "$t1")); // 得到最后偏移量
+                            } else {
+                                finalCodes.add(new FinalCode(mipsOp.li, "$t1", "", "", 0));
+                            }
+                            loadAddress(paraR.z,"$t0","$t1");
+                        }
                         finalCodes.add(new FinalCode(mipsOp.sw, "$t0", "$sp", "", -4 * j));
                         j++;
                     }
@@ -466,9 +525,9 @@ public class MipsGenerator {
                     break;
                     
                 case ARRAY:
-                    Integer arraySpace = Integer.parseInt(midCode.x);
+                    Integer arraySpace = parseInt(midCode.x);
                     if (midCode.y != null) {
-                        arraySpace = arraySpace * Integer.parseInt(midCode.y);
+                        arraySpace = arraySpace * parseInt(midCode.y);
                     }
                     defineArray(midCode.z,arraySpace);
                     break;
@@ -476,12 +535,12 @@ public class MipsGenerator {
                     loadValue(midCode.y,"$t0");
                     loadValue(midCode.x, "$t1");
                     finalCodes.add(new FinalCode(mipsOp.sll, "$t1", "$t1", "", 2));
-                    storeArrayValue(midCode.z,"$t0","$t1");
+                    storeArrayValue(midCode.z,"$t0","$t1"); // todo
                     break;
                 case GetARRAY:     //z + " = " + x + "[" + y + "]";
                     loadValue(midCode.y, "$t0");
                     finalCodes.add(new FinalCode(mipsOp.sll, "$t0", "$t0", "", 2));
-                    loadArrayValue(midCode.x,"$t1","$t0");
+                    loadArrayValue(midCode.x,"$t1","$t0");  // todo
                     storeValue(midCode.z,"$t1",isTemp(midCode.z));
                     break;
                     

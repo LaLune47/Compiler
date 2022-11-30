@@ -4,10 +4,12 @@ public class ItemInteger {
     private String name;
     private Integer offset; // 相对栈顶
     private IntegerTable table;
+    private Boolean isPointer;
     
-    public ItemInteger(String name,Integer offset) {
+    public ItemInteger(String name,Integer offset,Boolean isPointer) {
         this.name = name;
         this.offset = offset;
+        this.isPointer = isPointer;
     }
     
     public String getName() {
@@ -27,5 +29,9 @@ public class ItemInteger {
             return table.isGlobal();
         }
         return false;
+    }
+    
+    public Boolean getPointer() {
+        return isPointer;
     }
 }

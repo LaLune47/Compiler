@@ -415,6 +415,7 @@ public class SymbolTableBuilder {
             midCode.setX("2");
             Integer dimension2 = CalConst(funcFParamNode.childIterator(5),root_table);
             midCode.setY(dimension2.toString());
+            item.setSpace2(dimension2);
         }
         midCodes.add(midCode);
         return item;
