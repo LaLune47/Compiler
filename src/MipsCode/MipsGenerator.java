@@ -135,6 +135,7 @@ public class MipsGenerator {
         Boolean isPointer = isPointer(ident);
         if (isPointer) {
             loadValue(ident,regName);
+            finalCodes.add(new FinalCode(mipsOp.add, regName, regName, regIndexOffset));
             return;
         }
         boolean isGlobal = getGlobalArray(ident);
