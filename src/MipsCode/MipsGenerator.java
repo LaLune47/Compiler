@@ -139,7 +139,7 @@ public class MipsGenerator {
             finalCodes.add(new FinalCode(mipsOp.addi,regName,regIndexOffset,"",4 * offset));
         } else {
             finalCodes.add(new FinalCode(mipsOp.add, regIndexOffset, "$fp",regIndexOffset));
-            finalCodes.add(new FinalCode(mipsOp.addi,regName,regIndexOffset,"",4 * offset));
+            finalCodes.add(new FinalCode(mipsOp.addi,regName,regIndexOffset,"",-4 * offset));
         }
     }
     
@@ -157,7 +157,7 @@ public class MipsGenerator {
                 finalCodes.add(new FinalCode(mipsOp.lw, regName, regIndexOffset, "", 4 * offset));  //因为数组编号从0开始
             } else {
                 finalCodes.add(new FinalCode(mipsOp.add, regIndexOffset, "$fp",regIndexOffset));
-                finalCodes.add(new FinalCode(mipsOp.lw, regName, regIndexOffset, "", 4 * offset));
+                finalCodes.add(new FinalCode(mipsOp.lw, regName, regIndexOffset, "", -4 * offset));
             }
         }
     }
@@ -189,7 +189,7 @@ public class MipsGenerator {
                 finalCodes.add(new FinalCode(mipsOp.sw, regName, regIndexOffset, "", 4 * offset));  //因为数组编号从0开始
             } else {
                 finalCodes.add(new FinalCode(mipsOp.add, regIndexOffset, "$fp",regIndexOffset));
-                finalCodes.add(new FinalCode(mipsOp.sw, regName, regIndexOffset, "", 4 * offset));
+                finalCodes.add(new FinalCode(mipsOp.sw, regName, regIndexOffset, "", -4 * offset));
             }
         }
     }

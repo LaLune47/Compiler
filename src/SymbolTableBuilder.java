@@ -846,7 +846,7 @@ public class SymbolTableBuilder {
             if (unaryNode.getChildren() != null && unaryNode.getChildren().size() == 4) {
                 funcRParams = unaryNode.childIterator(2);
                 while (i < funcRParams.getChildren().size()) {
-                    Boolean flag = paraArray(funcRParams.childIterator(i));
+                    Boolean flag = paraArray(funcRParams.childIterator(i),paraReals);
                     if (flag == false) {
                         ExpItem paraReal = AddExp(funcRParams.childIterator(i).unwrap());
                         MidCode pushMc = new MidCode(midOp.PUSH,paraReal.getStr());
@@ -872,7 +872,7 @@ public class SymbolTableBuilder {
         }
     }
     
-    private boolean paraArray(Node exp) {
+    private boolean paraArray(Node exp,ArrayList<MidCode> paraReals) {
         int dimension = 0;
         Node lVal = null;
 
@@ -903,7 +903,7 @@ public class SymbolTableBuilder {
                 midCode.setX("array");
                 midCode.setY("array");
             }
-            midCodes.add(midCode);
+            paraReals.add(midCode);
             return true;
         } else { // 实参不为数组，可通过addExp正确得到
             return false;
