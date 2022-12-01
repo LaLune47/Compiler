@@ -37,6 +37,7 @@ public class Compiler {
                 return ((MyError) o1).getLine() - ((MyError) o2).getLine();
             }
         });
+        
         //PrintStream ps = new PrintStream(Config.errorPath);
         //System.setOut(ps);
         //for (MyError error: errorList) {
