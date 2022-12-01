@@ -132,6 +132,11 @@ public class MipsGenerator {
     }
     
     private void loadAddress(String ident,String regName, String regIndexOffset) {
+        Boolean isPointer = isPointer(ident);
+        if (isPointer) {
+            loadValue(ident,regName);
+            return;
+        }
         boolean isGlobal = getGlobalArray(ident);
         Integer offset = getArrayOffset(ident);
         if (isGlobal) {
