@@ -283,6 +283,7 @@ public class MipsGenerator {
                 case GEQOP:
                 case EQLOP:
                 case NEQOP:
+                case GetARRAY:
                     if (isTemp(midCode.z)) {
                         itemInFunc++;
                     }
