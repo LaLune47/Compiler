@@ -33,6 +33,8 @@ public class MipsGenerator {
         paraRs = new ArrayList<>();
         //setMainLength();
         genMips();
+        
+        finalCodes = regOptimize(finalCodes);
     }
     
     private void setMainLength() {
@@ -669,5 +671,21 @@ public class MipsGenerator {
                     break;
             }
         }
+    }
+    
+    private ArrayList<FinalCode> regOptimize(ArrayList<FinalCode> finalCodes) {
+        Integer len = finalCodes.size();
+        Integer i = 0;
+        for (i = 1;i < len;i++) {
+            FinalCode pre = finalCodes.get(i - 1);
+            FinalCode cur = finalCodes.get(i);
+            if (pre.op.equals(mipsOp.sw) && cur.op.equals(mipsOp.lw)
+                    && pre.x.equals(cur.x) && pre.z.equals(cur.z) && pre.imm.equals(cur.imm)) {
+                finalCodes.remove(i);
+                i--;
+                len--;
+            }
+        }
+        return finalCodes;
     }
 }
